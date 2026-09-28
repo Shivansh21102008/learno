@@ -16,32 +16,32 @@ export const AchievementsPage: React.FC = () => {
   return (
     <div className="space-y-8 py-6">
       {/* Header Banner */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-border dark:border-slate-800 p-6 sm:p-8 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-6 transition-colors">
+      <div className="bg-[#0A0D14]/90 border border-white/10 rounded-2xl p-6 sm:p-8 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-6 transition-colors">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 flex items-center justify-center">
               <Trophy className="w-4 h-4" />
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-text-primary dark:text-white">
-              Your Achievements
+            <h2 className="text-xl sm:text-2xl font-display font-black text-white tracking-tight uppercase">
+              Trophy & Achievement Matrix
             </h2>
           </div>
-          <p className="text-xs sm:text-sm text-text-secondary dark:text-slate-400">
-            Earn official badges as you conquer tests, maintain consistency, and master your syllabus.
+          <p className="font-mono text-xs text-slate-400">
+            [ RIG 5–9 ] UNLOCK BADGES BY MASTERING TESTS, MAINTAINING STREAKS, AND ELEVATING ACCURACY.
           </p>
         </div>
 
         {/* Badges Counter Pill */}
-        <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/80 border border-border dark:border-slate-700/80 px-5 py-3 rounded-xl">
+        <div className="flex items-center gap-3 bg-[#050505] border border-white/10 px-5 py-3 rounded-xl font-mono">
           <div>
-            <div className="text-xl sm:text-2xl font-extrabold text-primary dark:text-primary-light">
+            <div className="text-xl sm:text-2xl font-display font-black text-[#00FF66]">
               {unlockedCount} / {totalBadges}
             </div>
-            <div className="text-[11px] font-semibold text-text-secondary dark:text-slate-400">Badges Unlocked</div>
+            <div className="text-[10px] text-slate-400 uppercase tracking-wider">Badges Unlocked</div>
           </div>
-          <div className="w-20 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+          <div className="w-20 h-2 bg-[#0A0D14] rounded-full overflow-hidden border border-white/10">
             <div
-              className="h-full bg-primary rounded-full transition-all duration-700"
+              className="h-full bg-[#00FF66] rounded-full transition-all duration-700 shadow-[0_0_10px_rgba(0,255,102,0.5)]"
               style={{ width: `${Math.round((unlockedCount / totalBadges) * 100)}%` }}
             />
           </div>
@@ -70,10 +70,10 @@ export const AchievementsPage: React.FC = () => {
           return (
             <div
               key={badge.id}
-              className={`relative rounded-2xl border transition-all p-6 flex flex-col justify-between ${
+              className={`relative rounded-2xl border transition-all p-6 flex flex-col justify-between group ${
                 isUnlocked
-                  ? 'bg-white dark:bg-slate-900 border-border dark:border-slate-800 shadow-subtle hover:shadow-card'
-                  : 'bg-slate-50/60 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 opacity-80'
+                  ? 'bg-[#0A0D14]/90 border-[#00FF66]/40 shadow-[0_0_20px_rgba(0,255,102,0.1)]'
+                  : 'bg-[#050505] border-white/10 opacity-70'
               }`}
             >
               <div>
@@ -82,20 +82,20 @@ export const AchievementsPage: React.FC = () => {
                   <div
                     className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform ${
                       isUnlocked
-                        ? 'bg-primary-50 dark:bg-primary-950/60 text-primary dark:text-primary-light shadow-sm ring-2 ring-primary/20 dark:ring-primary/40'
-                        : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500'
+                        ? 'bg-[#00FF66]/10 border border-[#00FF66]/40 text-[#00FF66] shadow-[0_0_15px_rgba(0,255,102,0.2)]'
+                        : 'bg-white/5 border border-white/10 text-slate-500'
                     }`}
                   >
                     <BadgeIcon name={badge.icon} className="w-6 h-6" />
                   </div>
 
                   {isUnlocked ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-success dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+                    <span className="font-mono inline-flex items-center gap-1 text-[10px] font-bold text-[#00FF66] bg-[#00FF66]/10 px-2.5 py-1 rounded-full border border-[#00FF66]/30 uppercase">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       <span>Unlocked</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-text-secondary dark:text-slate-400 bg-slate-200/70 dark:bg-slate-800 px-2.5 py-1 rounded-full">
+                    <span className="font-mono inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-white/5 px-2.5 py-1 rounded-full border border-white/10 uppercase">
                       <Lock className="w-3 h-3" />
                       <span>Locked</span>
                     </span>
@@ -103,27 +103,27 @@ export const AchievementsPage: React.FC = () => {
                 </div>
 
                 {/* Badge Name & Description */}
-                <h3 className="text-base font-bold text-text-primary dark:text-white mb-1.5">
+                <h3 className="text-base font-bold text-white group-hover:text-[#00FF66] transition-colors mb-1.5">
                   {badge.name}
                 </h3>
-                <p className="text-xs text-text-secondary dark:text-slate-400 leading-relaxed mb-4">
+                <p className="text-xs text-slate-400 leading-relaxed mb-4">
                   {badge.description}
                 </p>
               </div>
 
               {/* Requirement & Progress Footer */}
-              <div className="pt-4 border-t border-border/80 dark:border-slate-800">
-                <div className="flex items-center justify-between text-xs text-text-secondary dark:text-slate-400 font-medium mb-1.5">
-                  <span className="truncate pr-2">{badge.requirement}</span>
-                  <span className="font-bold text-text-primary dark:text-white flex-shrink-0">
+              <div className="pt-4 border-t border-white/10 font-mono">
+                <div className="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                  <span className="truncate pr-2 text-[11px]">{badge.requirement}</span>
+                  <span className="font-bold text-white flex-shrink-0">
                     {currentProgress}/{maxProgress}
                   </span>
                 </div>
 
-                <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-border/60 dark:border-slate-700/60">
+                <div className="w-full h-2 bg-[#050505] rounded-full overflow-hidden border border-white/10">
                   <div
                     className={`h-full rounded-full transition-all duration-700 ${
-                      isUnlocked ? 'bg-primary' : 'bg-slate-400 dark:bg-slate-600'
+                      isUnlocked ? 'bg-[#00FF66]' : 'bg-white/20'
                     }`}
                     style={{ width: `${progressPercent}%` }}
                   />

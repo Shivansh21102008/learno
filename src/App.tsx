@@ -17,18 +17,26 @@ import { AuthModal } from './components/auth/AuthModal';
 import { AuthGateScreen } from './components/auth/AuthGateScreen';
 import { OnboardingModal } from './components/onboarding/OnboardingModal';
 import { ChangeClassModal } from './components/profile/ChangeClassModal';
-import { ProctorPrecheckModal } from './components/proctor/ProctorPrecheckModal';
 import { InstructionsModal } from './components/instructions/InstructionsModal';
 import { AITutorSidebar } from './components/ai/AITutorSidebar';
+import { CinematicIntroScreen } from './components/intro/CinematicIntroScreen';
 import { Trophy, X, Bot } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const [showIntro, setShowIntro] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>('All');
   const [isClassModalOpen, setIsClassModalOpen] = useState(false);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
   const [isAiTutorOpen, setIsAiTutorOpen] = useState(false);
+
+  // Trigger cinematic intro whenever user authenticates
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      setShowIntro(true);
+    }
+  }, [isAuthenticated]);
 
   // Reset scroll position to top whenever active tab changes
   React.useEffect(() => {
@@ -41,10 +49,7 @@ const MainLayout: React.FC = () => {
     activeResultModal,
     reviewTestResult,
     newBadgeUnlocked,
-    pendingProctorTest,
     startTest,
-    closeProctorPrecheck,
-    startProctoredExam,
     closeResultModal,
     openReviewAnswers,
     closeReviewAnswers,
@@ -54,6 +59,11 @@ const MainLayout: React.FC = () => {
   // If student is not signed up / logged in, strictly enforce the Auth Gate Screen
   if (!isAuthenticated) {
     return <AuthGateScreen />;
+  }
+
+  // Cinematic Intro on Login / Open: "Made & Directed By Rudra Giri"
+  if (showIntro) {
+    return <CinematicIntroScreen onComplete={() => setShowIntro(false)} />;
   }
 
   // If student is currently taking an exam, show full-screen examination interface!
@@ -73,7 +83,7 @@ const MainLayout: React.FC = () => {
     : null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0B0F19] text-text-primary dark:text-slate-100 transition-colors">
+    <div className="min-h-screen flex flex-col bg-[#050505] text-text-primary font-sans selection:bg-[#00FF66] selection:text-black">
       {/* Persistent Navbar */}
       <Navbar
         activeTab={activeTab}
@@ -85,7 +95,7 @@ const MainLayout: React.FC = () => {
       />
 
       {/* Main View Port */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-20 lg:pb-6">
         {activeTab === 'home' && (
           <HomePage
             setActiveTab={setActiveTab}
@@ -160,31 +170,20 @@ const MainLayout: React.FC = () => {
       {!isAiTutorOpen && (
         <button
           onClick={() => setIsAiTutorOpen(true)}
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-30 bg-gradient-to-l from-indigo-600 to-primary text-white py-3 px-2 rounded-l-2xl shadow-2xl flex flex-col items-center gap-2 hover:px-2.5 hover:shadow-indigo-500/40 transition-all duration-200 border-y border-l border-indigo-400/30 group"
-          title="Open AI Tutor Sidebar"
-          aria-label="Open AI Tutor Sidebar"
+          className="hidden sm:flex fixed right-0 top-1/2 -translate-y-1/2 z-30 bg-[#0A0D14] hover:bg-[#00FF66] text-white hover:text-black py-3 px-2 rounded-l-xl shadow-2xl flex-col items-center gap-2 hover:px-2.5 transition-all duration-200 border-y border-l border-white/10 hover:border-[#00FF66] group font-mono"
+          title="Open AI Copilot"
+          aria-label="Open AI Copilot"
         >
-          <div className="w-7 h-7 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Bot className="w-4 h-4 text-white" />
+          <div className="w-7 h-7 rounded-lg bg-white/5 group-hover:bg-black/10 flex items-center justify-center transition-transform">
+            <Bot className="w-4 h-4 text-[#00FF66] group-hover:text-black" />
           </div>
-          <span className="text-[10px] font-black tracking-widest uppercase [writing-mode:vertical-rl] rotate-180 text-white/95">
-            AI Tutor
+          <span className="text-[9px] font-bold tracking-widest uppercase [writing-mode:vertical-rl] rotate-180">
+            [ COPILOT ]
           </span>
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_6px_#00FF66]" />
         </button>
       )}
 
-      {/* Proctoring Pre-Check Device Gate */}
-      {pendingProctorTest && (
-        <ProctorPrecheckModal
-          test={pendingProctorTest}
-          isOpen={true}
-          onClose={closeProctorPrecheck}
-          onVerified={(stream, isSimulated) => {
-            startProctoredExam(stream, isSimulated);
-          }}
-        />
-      )}
 
       {/* Test Result Screen Modal */}
       {activeResultModal && (
@@ -213,19 +212,20 @@ const MainLayout: React.FC = () => {
 
       {/* Badge Unlocked Notification Toast */}
       {newBadgeUnlocked && (
-        <div className="fixed bottom-20 md:bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3.5 animate-in slide-in-from-bottom-5">
-          <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-bold flex-shrink-0">
+        <div className="fixed bottom-20 md:bottom-6 left-4 right-4 sm:left-auto sm:right-6 max-w-sm z-50 bg-[#0A0D14] text-white px-5 py-3.5 rounded-2xl shadow-[0_0_25px_rgba(0,255,102,0.2)] border border-[#00FF66]/40 flex items-center gap-3.5 animate-in slide-in-from-bottom-5 font-mono">
+          <div className="w-10 h-10 rounded-xl bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66] flex items-center justify-center font-bold flex-shrink-0">
             <Trophy className="w-5 h-5" />
           </div>
-          <div className="pr-2">
-            <div className="text-xs font-bold text-amber-300 uppercase tracking-wider">
-              Badge Unlocked! 🎉
+          <div className="pr-2 flex-1">
+            <div className="text-[10px] font-bold text-[#00FF66] uppercase tracking-wider">
+              BADGE UNLOCKED // TELEMETRY UPDATED
             </div>
-            <div className="text-sm font-bold text-white">{newBadgeUnlocked}</div>
+            <div className="text-sm font-bold text-white mt-0.5">{newBadgeUnlocked}</div>
           </div>
           <button
             onClick={dismissBadgeToast}
-            className="text-slate-400 hover:text-white p-1 rounded-lg"
+            aria-label="Dismiss badge"
+            className="text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-white/10 flex-shrink-0"
           >
             <X className="w-4 h-4" />
           </button>

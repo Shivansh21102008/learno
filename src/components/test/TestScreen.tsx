@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Test } from '../../types';
 import { useCurriculum } from '../../context/CurriculumContext';
-import { ProctorLiveOverlay } from '../proctor/ProctorLiveOverlay';
-import { DisqualifiedModal } from '../proctor/DisqualifiedModal';
 import {
   Clock,
   Bookmark,
@@ -11,7 +9,6 @@ import {
   Send,
   AlertCircle,
   X,
-  ShieldCheck,
 } from 'lucide-react';
 
 interface TestScreenProps {
@@ -28,12 +25,16 @@ export const TestScreen: React.FC<TestScreenProps> = ({
   const {
     submitTest,
     quitTest,
-    proctorStream,
-    isSimulatedProctor,
-    disqualificationReport,
-    handleDisqualification,
-    clearDisqualification,
   } = useCurriculum();
+
+  const handleAbortSession = () => {
+    quitTest();
+    if (onBackToDashboard) {
+      onBackToDashboard();
+    } else if (onBackToHome) {
+      onBackToHome();
+    }
+  };
 
   // Test states
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -112,86 +113,63 @@ export const TestScreen: React.FC<TestScreenProps> = ({
 
   const isTimeCritical = timeLeft < 120; // < 2 mins
 
-  // If student was disqualified by AI Proctor Guard, show official incident report!
-  if (disqualificationReport) {
-    return (
-      <DisqualifiedModal
-        report={disqualificationReport}
-        onExit={clearDisqualification}
-        onBackToHome={() => {
-          clearDisqualification();
-          if (onBackToHome) onBackToHome();
-        }}
-        onBackToDashboard={() => {
-          clearDisqualification();
-          if (onBackToDashboard) onBackToDashboard();
-        }}
-      />
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-text-primary dark:text-slate-100 flex flex-col justify-between transition-colors">
+    <div className="min-h-screen bg-[#050505] text-white flex flex-col justify-between bg-grid">
       {/* Test Header */}
-      <header className="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-border dark:border-slate-800 shadow-subtle px-4 sm:px-8 py-3.5 flex items-center justify-between transition-colors">
+      <header className="sticky top-0 z-30 bg-[#0A0D14] border-b border-white/10 px-3 sm:px-8 py-3 flex items-center justify-between font-mono">
         {/* Left: Subject & Chapter */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={() => setShowExitModal(true)}
-            className="p-1.5 text-text-secondary dark:text-slate-400 hover:text-text-primary dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-1.5 text-neutral-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex-shrink-0 border border-white/10"
             title="Exit Test"
+            aria-label="Exit Test Session"
           >
             <X className="w-5 h-5" />
           </button>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="text-xs sm:text-sm font-bold text-text-primary dark:text-white">
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-xs sm:text-sm font-bold text-white truncate max-w-[130px] sm:max-w-xs md:max-w-md">
                 {test.subject} — {test.chapter}
               </span>
               {test.isMainExam && (
-                <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] font-extrabold uppercase border border-amber-300 dark:border-amber-700">
-                  Main Exam
+                <span className="px-2 py-0.5 rounded bg-[#00FF66]/20 text-[#00FF66] text-[9px] sm:text-[10px] font-bold uppercase border border-[#00FF66]/40 flex-shrink-0">
+                  TERM RIG
                 </span>
               )}
             </div>
-            <span className="text-[11px] text-text-secondary dark:text-slate-400">
-              {test.title} • {test.difficulty} Difficulty
+            <span className="text-[10px] sm:text-[11px] text-neutral-400 truncate max-w-[150px] sm:max-w-none">
+              {test.title} • {test.difficulty.toUpperCase()}
             </span>
           </div>
         </div>
 
-        {/* Center: Question Counter & Proctor Status */}
+        {/* Center: Question Counter */}
         <div className="flex items-center gap-2">
-          {test.requiresProctoring && (
-            <div className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-primary dark:text-blue-300 text-xs font-bold">
-              <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-              <span>AI Proctor Monitored (Cam & Mic Active)</span>
-            </div>
-          )}
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-800 text-text-primary dark:text-slate-200 font-semibold text-xs rounded-full border border-border dark:border-slate-700">
-            <span>Question {currentIndex + 1} of {test.questions.length}</span>
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-[#050505] text-neutral-300 font-bold text-xs rounded-full border border-white/10">
+            <span>QUESTION {currentIndex + 1} OF {test.questions.length}</span>
           </div>
         </div>
 
         {/* Right: Live Timer & Submit */}
         <div className="flex items-center gap-3">
           <div
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-mono text-xs sm:text-sm font-bold tracking-wider transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs sm:text-sm font-bold tracking-wider transition-colors ${
               isTimeCritical
-                ? 'bg-red-50 dark:bg-red-950/50 text-danger border-red-200 dark:border-red-800 animate-pulse'
-                : 'bg-slate-50 dark:bg-slate-800 text-text-primary dark:text-slate-200 border-border dark:border-slate-700'
+                ? 'bg-rose-950/60 text-rose-400 border-rose-500 animate-pulse'
+                : 'bg-[#050505] text-[#00FF66] border-[#00FF66]/40 shadow-[0_0_12px_rgba(0,255,102,0.2)]'
             }`}
           >
-            <Clock className={`w-4 h-4 ${isTimeCritical ? 'text-danger' : 'text-primary'}`} />
+            <Clock className={`w-4 h-4 ${isTimeCritical ? 'text-rose-400' : 'text-[#00FF66]'}`} />
             <span>{formatTime(timeLeft)}</span>
           </div>
 
           <button
             onClick={() => setShowSubmitModal(true)}
-            className="px-3.5 py-1.5 bg-primary hover:bg-primary-dark text-white text-xs sm:text-sm font-bold rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+            className="px-4 py-1.5 bg-[#00FF66] hover:bg-[#00FF66]/90 text-black text-xs sm:text-sm font-bold rounded-lg shadow-[0_0_15px_rgba(0,255,102,0.3)] transition-all flex items-center gap-1.5"
           >
             <Send className="w-3.5 h-3.5" />
-            <span>Submit Test</span>
+            <span>SUBMIT</span>
           </button>
         </div>
       </header>
@@ -199,27 +177,53 @@ export const TestScreen: React.FC<TestScreenProps> = ({
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col lg:flex-row gap-6">
         {/* Left: Question Box */}
-        <section className="flex-1 bg-white dark:bg-slate-900 rounded-2xl border border-border dark:border-slate-800 shadow-card p-6 sm:p-8 flex flex-col justify-between transition-colors">
+        <section className="flex-1 bg-[#0A0D14]/90 rounded-2xl border border-white/10 shadow-card p-6 sm:p-8 flex flex-col justify-between transition-colors">
           <div>
+            {/* Mobile Question Quick Navigator (< lg screens) */}
+            <div className="lg:hidden flex items-center gap-1.5 overflow-x-auto pb-3 mb-4 border-b border-white/10 scrollbar-none font-mono">
+              {test.questions.map((_, idx) => {
+                const isCurrent = idx === currentIndex;
+                const isAnswered = answers[idx] !== undefined;
+                const isMarked = markedForReview.has(idx);
+
+                let badge = 'bg-white/5 text-neutral-400 border-white/10';
+                if (isMarked) badge = 'bg-amber-400/20 text-amber-300 border-amber-400';
+                else if (isAnswered) badge = 'bg-[#00FF66]/20 text-[#00FF66] border-[#00FF66]';
+                if (isCurrent) badge += ' ring-2 ring-[#00FF66] font-bold text-white';
+
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setCurrentIndex(idx)}
+                    className={`w-7 h-7 rounded-lg border text-[11px] flex-shrink-0 flex items-center justify-center transition-all ${badge}`}
+                    aria-label={`Jump to Question ${idx + 1}`}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Question Top Bar */}
-            <div className="flex items-center justify-between pb-4 border-b border-border dark:border-slate-800 mb-6">
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-6 font-mono">
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-md bg-primary-50 dark:bg-primary-950/60 text-primary dark:text-primary-light text-xs font-bold">
-                  Question {currentIndex + 1}
+                <span className="px-2.5 py-1 rounded bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/30 text-xs font-bold">
+                  QUESTION {currentIndex + 1}
                 </span>
-                <span className="text-xs text-text-secondary dark:text-slate-400">Single Choice</span>
+                <span className="text-xs text-neutral-400">SINGLE CHOICE (5 OPTIONS)</span>
               </div>
 
               {markedForReview.has(currentIndex) && (
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-warning dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/30">
                   <Bookmark className="w-3.5 h-3.5 fill-current" />
-                  Marked for Review
+                  REVIEW FLAGGED
                 </span>
               )}
             </div>
 
             {/* Question Text */}
-            <h2 className="text-base sm:text-lg font-medium text-text-primary dark:text-white leading-relaxed mb-8">
+            <h2 className="text-base sm:text-lg font-medium text-white leading-relaxed mb-8">
               {currentQuestion.question}
             </h2>
 
@@ -234,18 +238,18 @@ export const TestScreen: React.FC<TestScreenProps> = ({
                     role="radio"
                     aria-checked={isSelected}
                     onClick={() => handleSelectOption(optIdx)}
-                    className={`w-full text-left p-3.5 sm:p-4 rounded-xl border transition-all flex items-center justify-between group ${
+                    className={`w-full text-left p-3.5 sm:p-4 rounded-xl border transition-all flex items-center justify-between group min-h-[44px] ${
                       isSelected
-                        ? 'border-primary bg-primary-50/80 dark:bg-primary-950/60 text-text-primary dark:text-white ring-2 ring-primary/20 shadow-sm'
-                        : 'border-border dark:border-slate-800 bg-white dark:bg-slate-850 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-text-primary dark:text-slate-200'
+                        ? 'border-[#00FF66] bg-[#00FF66]/10 text-white shadow-[0_0_15px_rgba(0,255,102,0.15)] ring-1 ring-[#00FF66]'
+                        : 'border-white/10 bg-[#050505] hover:border-[#00FF66]/50 hover:bg-white/5 text-neutral-200'
                     }`}
                   >
                     <div className="flex items-center gap-3.5">
                       <span
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-colors ${
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono text-xs font-bold transition-colors ${
                           isSelected
-                            ? 'bg-primary text-white shadow-sm'
-                            : 'bg-slate-100 dark:bg-slate-800 text-text-secondary dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'
+                            ? 'bg-[#00FF66] text-black shadow-sm'
+                            : 'bg-white/5 text-neutral-400 group-hover:bg-white/10 group-hover:text-white border border-white/10'
                         }`}
                       >
                         {optionLabels[optIdx]}
@@ -255,10 +259,10 @@ export const TestScreen: React.FC<TestScreenProps> = ({
 
                     <div
                       className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                        isSelected ? 'border-primary bg-primary' : 'border-slate-300 dark:border-slate-600'
+                        isSelected ? 'border-[#00FF66] bg-[#00FF66]' : 'border-white/20'
                       }`}
                     >
-                      {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-black" />}
                     </div>
                   </button>
                 );
@@ -267,28 +271,28 @@ export const TestScreen: React.FC<TestScreenProps> = ({
           </div>
 
           {/* Action Footer */}
-          <div className="mt-8 pt-6 border-t border-border dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-8 pt-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 font-mono">
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={toggleMarkForReview}
-                className={`px-3.5 py-2 rounded-lg text-xs font-semibold border flex items-center gap-1.5 transition-colors ${
+                className={`px-3.5 py-2 min-h-[38px] rounded-lg text-xs font-bold border flex items-center gap-1.5 transition-colors ${
                   markedForReview.has(currentIndex)
-                    ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-800 text-warning dark:text-amber-400'
-                    : 'border-border dark:border-slate-700 text-text-secondary dark:text-slate-300 hover:text-text-primary dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
+                    ? 'bg-amber-400/10 border-amber-400 text-amber-400'
+                    : 'border-white/10 text-neutral-400 hover:text-white hover:bg-white/5'
                 }`}
               >
                 <Bookmark className={`w-3.5 h-3.5 ${markedForReview.has(currentIndex) ? 'fill-current' : ''}`} />
-                <span>{markedForReview.has(currentIndex) ? 'Unmark Review' : 'Mark for Review'}</span>
+                <span>{markedForReview.has(currentIndex) ? 'UNMARK REVIEW' : 'MARK REVIEW'}</span>
               </button>
 
               {answers[currentIndex] !== undefined && (
                 <button
                   type="button"
                   onClick={handleClearAnswer}
-                  className="px-3 py-2 text-xs font-medium text-text-secondary dark:text-slate-400 hover:text-danger dark:hover:text-red-400 transition-colors"
+                  className="px-3 py-2 min-h-[38px] text-xs font-medium text-neutral-400 hover:text-rose-400 transition-colors"
                 >
-                  Clear Selection
+                  CLEAR SELECTION
                 </button>
               )}
             </div>
@@ -298,29 +302,29 @@ export const TestScreen: React.FC<TestScreenProps> = ({
                 type="button"
                 disabled={currentIndex === 0}
                 onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
-                className="px-4 py-2 rounded-lg border border-border dark:border-slate-700 text-xs font-semibold text-text-secondary dark:text-slate-300 hover:text-text-primary dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none transition-colors flex items-center gap-1"
+                className="px-4 py-2 min-h-[38px] rounded-lg border border-white/10 text-xs font-bold text-neutral-300 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:pointer-events-none transition-colors flex items-center gap-1"
               >
                 <ChevronLeft className="w-4 h-4" />
-                <span>Previous</span>
+                <span>PREVIOUS</span>
               </button>
 
               {currentIndex < test.questions.length - 1 ? (
                 <button
                   type="button"
                   onClick={() => setCurrentIndex((prev) => Math.min(test.questions.length - 1, prev + 1))}
-                  className="px-5 py-2 rounded-lg bg-primary hover:bg-primary-dark text-white text-xs font-bold shadow-sm transition-colors flex items-center gap-1"
+                  className="px-5 py-2 min-h-[38px] rounded-lg bg-[#00FF66] hover:bg-[#00FF66]/90 text-black text-xs font-bold shadow-sm transition-colors flex items-center gap-1"
                 >
-                  <span>Next</span>
+                  <span>NEXT</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => setShowSubmitModal(true)}
-                  className="px-5 py-2 rounded-lg bg-success hover:bg-success-dark text-white text-xs font-bold shadow-sm transition-colors flex items-center gap-1.5"
+                  className="px-5 py-2 min-h-[38px] rounded-lg bg-[#00FF66] hover:bg-[#00FF66]/90 text-black text-xs font-bold shadow-[0_0_15px_rgba(0,255,102,0.3)] transition-colors flex items-center gap-1.5"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>Submit Test</span>
+                  <span>SUBMIT TEST</span>
                 </button>
               )}
             </div>
@@ -328,28 +332,28 @@ export const TestScreen: React.FC<TestScreenProps> = ({
         </section>
 
         {/* Right: Question Navigator Palette */}
-        <aside className="w-full lg:w-80 bg-white dark:bg-slate-900 rounded-2xl border border-border dark:border-slate-800 shadow-card p-5 flex flex-col justify-between transition-colors">
+        <aside className="w-full lg:w-80 bg-[#0A0D14]/90 rounded-2xl border border-white/10 shadow-card p-5 flex flex-col justify-between transition-colors font-mono">
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary dark:text-white mb-3">
-              Question Navigator
+            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#00FF66] mb-3">
+              QUESTION NAVIGATOR
             </h3>
 
             {/* Status Legend */}
-            <div className="grid grid-cols-2 gap-2 text-[11px] mb-4 pb-3 border-b border-border dark:border-slate-800">
-              <div className="flex items-center gap-1.5 text-text-secondary dark:text-slate-400">
-                <span className="w-3 h-3 rounded-full bg-primary" />
+            <div className="grid grid-cols-2 gap-2 text-[10px] mb-4 pb-3 border-b border-white/10">
+              <div className="flex items-center gap-1.5 text-neutral-400">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#00FF66]" />
                 <span>Answered ({answeredCount})</span>
               </div>
-              <div className="flex items-center gap-1.5 text-text-secondary dark:text-slate-400">
-                <span className="w-3 h-3 rounded-full bg-slate-200 dark:bg-slate-700 border border-border dark:border-slate-600" />
+              <div className="flex items-center gap-1.5 text-neutral-400">
+                <span className="w-2.5 h-2.5 rounded-full bg-white/10 border border-white/20" />
                 <span>Unanswered ({unansweredCount})</span>
               </div>
-              <div className="flex items-center gap-1.5 text-text-secondary dark:text-slate-400">
-                <span className="w-3 h-3 rounded-full bg-amber-500" />
+              <div className="flex items-center gap-1.5 text-neutral-400">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
                 <span>Marked ({markedCount})</span>
               </div>
-              <div className="flex items-center gap-1.5 text-text-secondary dark:text-slate-400">
-                <span className="w-3 h-3 rounded-full border-2 border-primary bg-white dark:bg-slate-800" />
+              <div className="flex items-center gap-1.5 text-neutral-400">
+                <span className="w-2.5 h-2.5 rounded-full border-2 border-[#00FF66] bg-[#0A0D14]" />
                 <span>Current</span>
               </div>
             </div>
@@ -361,16 +365,16 @@ export const TestScreen: React.FC<TestScreenProps> = ({
                 const isAnswered = answers[idx] !== undefined;
                 const isMarked = markedForReview.has(idx);
 
-                let stateClasses = 'bg-white dark:bg-slate-800 border-border dark:border-slate-700 text-text-secondary dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700';
+                let stateClasses = 'bg-[#050505] border-white/10 text-neutral-400 hover:text-white hover:border-white/30';
 
                 if (isMarked) {
-                  stateClasses = 'bg-amber-500 border-amber-600 text-white font-bold';
+                  stateClasses = 'bg-amber-400/20 border-amber-400 text-amber-300 font-bold';
                 } else if (isAnswered) {
-                  stateClasses = 'bg-primary border-primary text-white font-bold';
+                  stateClasses = 'bg-[#00FF66]/20 border-[#00FF66] text-[#00FF66] font-bold';
                 }
 
                 if (isCurrent) {
-                  stateClasses += ' ring-2 ring-primary ring-offset-1 dark:ring-offset-slate-900 border-primary font-bold';
+                  stateClasses += ' ring-2 ring-[#00FF66] border-[#00FF66] font-bold text-white shadow-[0_0_10px_rgba(0,255,102,0.3)]';
                 }
 
                 return (
@@ -379,6 +383,7 @@ export const TestScreen: React.FC<TestScreenProps> = ({
                     type="button"
                     onClick={() => setCurrentIndex(idx)}
                     className={`h-9 rounded-lg border text-xs flex items-center justify-center transition-all ${stateClasses}`}
+                    aria-label={`Question ${idx + 1}: ${isCurrent ? 'Current, ' : ''}${isMarked ? 'Marked for review, ' : ''}${isAnswered ? 'Answered' : 'Unanswered'}`}
                   >
                     {idx + 1}
                   </button>
@@ -387,13 +392,13 @@ export const TestScreen: React.FC<TestScreenProps> = ({
             </div>
           </div>
 
-          <div className="pt-4 border-t border-border dark:border-slate-800 mt-4">
+          <div className="pt-4 border-t border-white/10 mt-4">
             <button
               onClick={() => setShowSubmitModal(true)}
-              className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 min-h-[44px] bg-[#00FF66] hover:bg-[#00FF66]/90 text-black rounded-xl text-xs font-bold shadow-[0_0_15px_rgba(0,255,102,0.3)] transition-all flex items-center justify-center gap-2"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>Review & Submit</span>
+              <span>REVIEW & SUBMIT</span>
             </button>
           </div>
         </aside>
@@ -401,25 +406,25 @@ export const TestScreen: React.FC<TestScreenProps> = ({
 
       {/* Submit Confirmation Modal */}
       {showSubmitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-border dark:border-slate-800 p-6">
-            <h3 className="text-lg font-bold text-text-primary dark:text-white mb-2">Submit Test?</h3>
-            <p className="text-xs text-text-secondary dark:text-slate-400 mb-4">
-              Are you sure you want to submit your test? Here is your question summary:
+        <div role="dialog" aria-modal="true" aria-labelledby="submit-dialog-title" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md bg-[#0A0D14] rounded-2xl shadow-2xl border border-white/10 p-6 font-mono">
+            <h3 id="submit-dialog-title" className="text-base font-bold text-white mb-2 uppercase">Submit Examination?</h3>
+            <p className="text-xs text-neutral-400 mb-4">
+              Confirm submission of your session. Telemetry breakdown:
             </p>
 
-            <div className="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-4 border border-border dark:border-slate-700 space-y-2 mb-6 text-xs">
+            <div className="bg-[#050505] rounded-xl p-4 border border-white/10 space-y-2 mb-6 text-xs">
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary dark:text-slate-400">Answered Questions:</span>
-                <span className="font-bold text-success dark:text-emerald-400">{answeredCount}</span>
+                <span className="text-neutral-400">Answered Questions:</span>
+                <span className="font-bold text-[#00FF66]">{answeredCount}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary dark:text-slate-400">Unanswered Questions:</span>
-                <span className="font-bold text-danger dark:text-rose-400">{unansweredCount}</span>
+                <span className="text-neutral-400">Unanswered Questions:</span>
+                <span className="font-bold text-rose-400">{unansweredCount}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary dark:text-slate-400">Marked for Review:</span>
-                <span className="font-bold text-warning dark:text-amber-400">{markedCount}</span>
+                <span className="text-neutral-400">Marked for Review:</span>
+                <span className="font-bold text-amber-400">{markedCount}</span>
               </div>
             </div>
 
@@ -427,16 +432,16 @@ export const TestScreen: React.FC<TestScreenProps> = ({
               <button
                 type="button"
                 onClick={() => setShowSubmitModal(false)}
-                className="flex-1 py-2.5 border border-border dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-text-secondary dark:text-slate-300 text-xs font-semibold rounded-lg transition-colors"
+                className="flex-1 py-2.5 min-h-[40px] border border-white/10 hover:bg-white/5 text-neutral-300 text-xs font-bold rounded-lg transition-colors"
               >
-                Continue Test
+                RETURN TO RIG
               </button>
               <button
                 type="button"
                 onClick={handleFinalSubmit}
-                className="flex-1 py-2.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg shadow-sm transition-colors"
+                className="flex-1 py-2.5 min-h-[40px] bg-[#00FF66] hover:bg-[#00FF66]/90 text-black text-xs font-bold rounded-lg shadow-[0_0_15px_rgba(0,255,102,0.3)] transition-colors"
               >
-                Submit Test
+                CONFIRM SUBMIT
               </button>
             </div>
           </div>
@@ -445,60 +450,34 @@ export const TestScreen: React.FC<TestScreenProps> = ({
 
       {/* Exit Test Warning Modal */}
       {showExitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-border dark:border-slate-800 p-6">
-            <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/50 text-danger flex items-center justify-center mb-3">
+        <div role="dialog" aria-modal="true" aria-labelledby="exit-dialog-title" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
+          <div className="relative w-full max-w-sm bg-[#0A0D14] rounded-2xl shadow-2xl border border-white/10 p-6 font-mono">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mb-3">
               <AlertCircle className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-bold text-text-primary dark:text-white mb-1">Exit Active Test?</h3>
-            <p className="text-xs text-text-secondary dark:text-slate-400 mb-5 leading-relaxed">
-              If you leave now, your answers for this attempt will not be recorded and your test
-              session will be discarded.
+            <h3 id="exit-dialog-title" className="text-sm font-bold text-white mb-1 uppercase">ABORT TEST SESSION?</h3>
+            <p className="text-xs text-neutral-400 mb-5 leading-relaxed">
+              If you abort now, answers for this session will not be saved to your telemetry record.
             </p>
 
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setShowExitModal(false)}
-                className="flex-1 py-2 border border-border dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-text-secondary dark:text-slate-300 text-xs font-semibold rounded-lg transition-colors"
+                className="flex-1 py-2 min-h-[40px] border border-white/10 hover:bg-white/5 text-neutral-300 text-xs font-bold rounded-lg transition-colors"
               >
-                Stay in Test
+                STAY IN TEST
               </button>
               <button
                 type="button"
-                onClick={quitTest}
-                className="flex-1 py-2 bg-danger hover:bg-danger-dark text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
+                onClick={handleAbortSession}
+                className="flex-1 py-2 min-h-[40px] bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg shadow-sm transition-colors"
               >
-                Exit Test
+                ABORT SESSION
               </button>
             </div>
           </div>
         </div>
-      )}
-
-      {/* AI Proctoring Live HUD Overlay */}
-      {test.requiresProctoring && !disqualificationReport && (
-        <ProctorLiveOverlay
-          test={test}
-          stream={proctorStream}
-          isSimulated={isSimulatedProctor}
-          onDisqualified={handleDisqualification}
-        />
-      )}
-
-      {/* Official Academic Integrity Disqualification Modal */}
-      {disqualificationReport && (
-        <DisqualifiedModal
-          report={disqualificationReport}
-          onBackToHome={() => {
-            clearDisqualification();
-            if (onBackToHome) onBackToHome();
-          }}
-          onBackToDashboard={() => {
-            clearDisqualification();
-            if (onBackToDashboard) onBackToDashboard();
-          }}
-        />
       )}
     </div>
   );

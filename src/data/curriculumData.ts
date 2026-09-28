@@ -1,4 +1,4 @@
-import { StudentClass, SubjectMeta, Achievement, Test, Question } from '../types';
+import { StudentClass, Achievement, Test, Question } from '../types';
 import { CLASS_CHAPTERS } from './classChapters';
 import { generateQuestionsForTest as generateQuestionsForTestEngine, getConceptsForChapter } from './chapterQuestionEngine';
 
@@ -166,7 +166,7 @@ export function generateQuestionsForTest(
   return generateQuestionsForTestEngine(subject, chapter, testNumber, studentClass, problemNumber || testNumber);
 }
 
-// Generate Main Integrated Examinations for Class with AI Proctoring requirements
+// Generate Main Integrated Comprehensive Examinations for Class
 export function generateMainExaminationsForClass(studentClass: StudentClass): Test[] {
   const cNum = studentClass.replace(/\s+/g, '');
 
@@ -183,7 +183,6 @@ export function generateMainExaminationsForClass(studentClass: StudentClass): Te
       durationMinutes: 25,
       difficulty: 'Medium',
       isMainExam: true,
-      requiresProctoring: true,
       questions: generateQuestionsForTest('Mathematics', 'Place Value', 1, studentClass).slice(0, 5)
         .concat(generateQuestionsForTest('Science', 'Plants', 1, studentClass).slice(0, 5))
         .concat(generateQuestionsForTest('Social Science', 'Maps', 1, studentClass).slice(0, 5))
@@ -202,7 +201,6 @@ export function generateMainExaminationsForClass(studentClass: StudentClass): Te
       durationMinutes: 30,
       difficulty: 'Hard',
       isMainExam: true,
-      requiresProctoring: true,
       questions: generateQuestionsForTest('Mathematics', 'Geometry', 2, studentClass).slice(0, 6)
         .concat(generateQuestionsForTest('Science', 'Heat', 2, studentClass).slice(0, 6))
         .concat(generateQuestionsForTest('Social Science', 'History', 2, studentClass).slice(0, 6))
@@ -221,7 +219,6 @@ export function generateMainExaminationsForClass(studentClass: StudentClass): Te
       durationMinutes: 25,
       difficulty: 'Hard',
       isMainExam: true,
-      requiresProctoring: true,
       questions: generateQuestionsForTest('Mathematics', 'Equations', 3, studentClass).slice(0, 5)
         .concat(generateQuestionsForTest('Science', 'Microorganisms', 3, studentClass).slice(0, 5))
         .concat(generateQuestionsForTest('Social Science', 'Constitution', 3, studentClass).slice(0, 5))
@@ -231,7 +228,7 @@ export function generateMainExaminationsForClass(studentClass: StudentClass): Te
   ];
 }
 
-// Generate the complete set of tests per class (200 Unique Chapter Tests + 3 Main Proctored Exams)
+// Generate the complete set of tests per class (200 Unique Chapter Tests + 3 Main Examinations)
 export function generateCurriculumTestsForClass(studentClass: StudentClass): Test[] {
   const tests: Test[] = [];
   const subjectChapters = CLASS_CHAPTERS[studentClass];
@@ -278,7 +275,7 @@ export function generateCurriculumTestsForClass(studentClass: StudentClass): Tes
     });
   }
 
-  // Also include the 3 Main Proctored Examinations
+  // Also include the 3 Main Examinations
   const mainExams = generateMainExaminationsForClass(studentClass);
   tests.push(...mainExams);
 

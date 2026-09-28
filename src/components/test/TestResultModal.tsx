@@ -35,46 +35,53 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
   const isHighScorer = result.accuracy >= 80;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-200">
-      <div data-lenis-prevent className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-border dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div 
+        role="dialog" 
+        aria-modal="true" 
+        data-lenis-prevent 
+        className="relative w-full max-w-lg bg-glitch-panel rounded-xl shadow-2xl border border-glitch-border overflow-y-auto max-h-[92vh] animate-in zoom-in-95 duration-200"
+      >
         {/* Banner */}
         <div
-          className={`p-6 text-center text-white relative ${
-            isHighScorer ? 'bg-primary' : 'bg-slate-800 dark:bg-slate-850'
+          className={`p-6 text-center relative border-b ${
+            isHighScorer 
+              ? 'bg-glitch-panel border-glitch-green shadow-[0_0_15px_rgba(0,255,102,0.2)]' 
+              : 'bg-glitch-surface border-glitch-border'
           }`}
         >
-          <div className="w-12 h-12 rounded-2xl bg-white/10 mx-auto flex items-center justify-center mb-3 backdrop-blur-sm border border-white/20">
+          <div className={`w-12 h-12 rounded-2xl mx-auto flex items-center justify-center mb-3 border ${isHighScorer ? 'bg-glitch-green/10 border-glitch-green/30 text-glitch-green' : 'bg-glitch-card border-glitch-border text-text-primary'}`}>
             {isHighScorer ? (
-              <Trophy className="w-7 h-7 text-amber-300" />
+              <Trophy className="w-7 h-7" />
             ) : (
-              <Sparkles className="w-7 h-7 text-white" />
+              <Sparkles className="w-7 h-7" />
             )}
           </div>
-          <h2 className="text-2xl font-bold tracking-tight">Test Completed 🎉</h2>
-          <p className="text-white/80 text-xs sm:text-sm mt-1">
+          <h2 className="text-2xl font-bold tracking-tight text-text-primary font-display">Test Completed 🎉</h2>
+          <p className="text-text-secondary font-mono text-xs mt-1">
             {result.subject} • Chapter: {result.chapter} • Test 0{result.testNumber}
           </p>
         </div>
 
         {/* Score Card Display */}
         <div className="p-6 sm:p-8">
-          <div className="bg-slate-50 dark:bg-slate-800/80 border border-border dark:border-slate-700/80 rounded-2xl p-6 text-center mb-6">
+          <div className="bg-glitch-surface border border-glitch-border rounded-2xl p-6 text-center mb-6">
             <div className="flex items-center justify-center gap-2 mb-1">
-              <span className="text-4xl sm:text-5xl font-extrabold text-text-primary dark:text-white">
+              <span className="text-4xl sm:text-5xl font-extrabold text-text-primary font-display">
                 {result.score}
               </span>
-              <span className="text-2xl font-bold text-text-secondary dark:text-slate-400">
+              <span className="text-2xl font-bold text-text-secondary font-display">
                 / {result.totalQuestions}
               </span>
             </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-950/60 text-primary dark:text-primary-light font-bold text-sm">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-glitch-green/10 border border-glitch-green/30 text-glitch-green font-mono text-sm">
               <Target className="w-4 h-4" />
               <span>{result.accuracy}% Accuracy</span>
             </div>
 
             {/* Performance Visual Progress Bar */}
             <div className="mt-5">
-              <div className="flex justify-between text-xs text-text-secondary dark:text-slate-400 font-medium mb-1.5">
+              <div className="flex justify-between text-xs text-text-secondary font-mono font-medium mb-1.5">
                 <span>Performance</span>
                 <span>
                   {result.accuracy >= 80
@@ -84,15 +91,9 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
                     : 'Needs Revision'}
                 </span>
               </div>
-              <div className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div className="w-full h-3 bg-glitch-ink border border-glitch-border rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-1000 ${
-                    result.accuracy >= 80
-                      ? 'bg-success'
-                      : result.accuracy >= 60
-                      ? 'bg-primary'
-                      : 'bg-warning'
-                  }`}
+                  className="h-full rounded-full transition-all duration-1000 bg-glitch-green shadow-[0_0_10px_rgba(0,255,102,0.5)]"
                   style={{ width: `${result.accuracy}%` }}
                 />
               </div>
@@ -101,30 +102,30 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
 
           {/* Metric Stats Breakdown */}
           <div className="grid grid-cols-3 gap-3 text-center mb-8">
-            <div className="p-3 bg-white dark:bg-slate-800 border border-border dark:border-slate-700 rounded-xl">
-              <div className="flex items-center justify-center text-success dark:text-emerald-400 mb-1">
+            <div className="p-3 bg-glitch-card border border-glitch-border rounded-xl font-mono">
+              <div className="flex items-center justify-center text-glitch-green mb-1">
                 <CheckCircle2 className="w-4 h-4" />
               </div>
-              <div className="text-base font-bold text-text-primary dark:text-white">{result.score}</div>
-              <div className="text-[11px] text-text-secondary dark:text-slate-400 font-medium">Correct</div>
+              <div className="text-base font-bold text-text-primary">{result.score}</div>
+              <div className="text-[11px] text-text-secondary font-medium">Correct</div>
             </div>
 
-            <div className="p-3 bg-white dark:bg-slate-800 border border-border dark:border-slate-700 rounded-xl">
-              <div className="flex items-center justify-center text-danger dark:text-rose-400 mb-1">
+            <div className="p-3 bg-glitch-card border border-glitch-border rounded-xl font-mono">
+              <div className="flex items-center justify-center text-red-400 mb-1">
                 <XCircle className="w-4 h-4" />
               </div>
-              <div className="text-base font-bold text-text-primary dark:text-white">{incorrectCount}</div>
-              <div className="text-[11px] text-text-secondary dark:text-slate-400 font-medium">Incorrect</div>
+              <div className="text-base font-bold text-text-primary">{incorrectCount}</div>
+              <div className="text-[11px] text-text-secondary font-medium">Incorrect</div>
             </div>
 
-            <div className="p-3 bg-white dark:bg-slate-800 border border-border dark:border-slate-700 rounded-xl">
-              <div className="flex items-center justify-center text-primary dark:text-primary-light mb-1">
+            <div className="p-3 bg-glitch-card border border-glitch-border rounded-xl font-mono">
+              <div className="flex items-center justify-center text-glitch-green mb-1">
                 <Clock className="w-4 h-4" />
               </div>
-              <div className="text-base font-bold text-text-primary dark:text-white">
+              <div className="text-base font-bold text-text-primary">
                 {formatTime(result.timeTakenSeconds)}
               </div>
-              <div className="text-[11px] text-text-secondary dark:text-slate-400 font-medium">Time Taken</div>
+              <div className="text-[11px] text-text-secondary font-medium">Time Taken</div>
             </div>
           </div>
 
@@ -133,7 +134,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
             <button
               type="button"
               onClick={() => onReview(result)}
-              className="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-xl text-sm font-bold shadow-sm transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 bg-glitch-green hover:brightness-110 text-glitch-ink rounded-xl text-xs font-bold shadow-[0_0_12px_rgba(0,255,102,0.25)] transition-colors flex items-center justify-center gap-2 min-h-[44px]"
             >
               <Eye className="w-4 h-4" />
               <span>Review Detailed Answers</span>
@@ -143,7 +144,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
               <button
                 type="button"
                 onClick={() => onRetake(result.testId)}
-                className="flex-1 py-2.5 border border-border dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-text-secondary dark:text-slate-300 hover:text-text-primary dark:hover:text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 border border-glitch-border bg-glitch-card hover:bg-glitch-surface text-text-primary rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 min-h-[44px]"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Retake Test</span>
@@ -152,7 +153,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-text-primary dark:text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 border border-glitch-border bg-glitch-card hover:bg-glitch-surface text-text-primary rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 min-h-[44px]"
               >
                 <span>Back to Tests</span>
                 <ArrowRight className="w-3.5 h-3.5" />

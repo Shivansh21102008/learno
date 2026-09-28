@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { VALID_CLASSES, StudentClass } from '../../types';
 import { X, GraduationCap, ArrowRight, Lock, Mail, User as UserIcon, Sparkles } from 'lucide-react';
 
 export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, authModalMode, closeAuthModal, openAuthModal, login, signup, loginWithGoogle } = useAuth();
+  const { isAuthModalOpen, authModalMode, closeAuthModal, openAuthModal, login, signup, loginWithGoogle, loginAsGuest, accounts } = useAuth();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -17,12 +16,14 @@ export const AuthModal: React.FC = () => {
     e.preventDefault();
     setErrorMessage('');
 
+    const trimmedEmail = email.trim().toLowerCase();
+
     if (authModalMode === 'signup') {
       if (!name.trim()) {
         setErrorMessage('Please enter your full name.');
         return;
       }
-      if (!email.trim() || !email.includes('@')) {
+      if (!trimmedEmail || !trimmedEmail.includes('@')) {
         setErrorMessage('Please enter a valid school email address.');
         return;
       }
@@ -30,34 +31,54 @@ export const AuthModal: React.FC = () => {
         setErrorMessage('Password should be at least 6 characters.');
         return;
       }
-      signup(name, email, password);
+      if (accounts[trimmedEmail]) {
+        setErrorMessage('An account with this email is already registered. Please login.');
+        return;
+      }
+      const ok = signup(name, trimmedEmail, password);
+      if (!ok) {
+        setErrorMessage('Could not create account. Please check your details.');
+      }
     } else {
-      if (!email.trim()) {
+      if (!trimmedEmail) {
         setErrorMessage('Please enter your email.');
         return;
       }
-      login(email, password);
+      const ok = login(trimmedEmail, password);
+      if (!ok) {
+        const acc = accounts[trimmedEmail];
+        if (!acc) {
+          setErrorMessage('No student account found with this email. Please sign up first.');
+        } else {
+          setErrorMessage('Incorrect password. Please verify and try again.');
+        }
+      }
     }
   };
 
   const handleDemoLogin = () => {
-    login('shivansh@example.com', 'password123');
+    loginAsGuest();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-150">
-      <div data-lenis-prevent className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-border dark:border-slate-800 overflow-hidden transition-colors">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
+      <div 
+        role="dialog" 
+        aria-modal="true" 
+        data-lenis-prevent 
+        className="relative w-full max-w-md bg-glitch-panel border border-glitch-border rounded-xl shadow-2xl overflow-y-auto max-h-[92vh] transition-colors"
+      >
         {/* Modal Header */}
-        <div className="bg-slate-50 dark:bg-slate-850 px-6 py-5 border-b border-border dark:border-slate-800 flex items-center justify-between">
+        <div className="bg-glitch-surface px-6 py-5 border-b border-glitch-border flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white">
+            <div className="w-9 h-9 rounded-xl bg-glitch-green/10 border border-glitch-green/30 flex items-center justify-center text-glitch-green">
               <GraduationCap className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-text-primary dark:text-white">
+              <h3 className="text-base font-bold text-text-primary">
                 {authModalMode === 'signup' ? 'Create Student Account' : 'Welcome Back to Learno'}
               </h3>
-              <p className="text-xs text-text-secondary dark:text-slate-400">
+              <p className="text-xs text-text-secondary">
                 {authModalMode === 'signup'
                   ? 'Join thousands of students practicing daily'
                   : 'Log in to continue your test streak'}
@@ -66,7 +87,8 @@ export const AuthModal: React.FC = () => {
           </div>
           <button
             onClick={closeAuthModal}
-            className="p-1.5 text-text-secondary dark:text-slate-400 hover:text-text-primary dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            aria-label="Close modal"
+            className="p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-glitch-surface rounded-lg transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -75,7 +97,7 @@ export const AuthModal: React.FC = () => {
         {/* Modal Body */}
         <div className="p-6">
           {errorMessage && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-danger dark:text-rose-400 rounded-lg text-xs font-medium">
+            <div className="mb-4 p-3 bg-red-950/30 border border-red-500/40 text-red-400 font-mono text-xs rounded-lg font-medium">
               {errorMessage}
             </div>
           )}
@@ -84,7 +106,7 @@ export const AuthModal: React.FC = () => {
           <button
             type="button"
             onClick={() => loginWithGoogle()}
-            className="w-full mb-4 py-2.5 px-4 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-100 text-xs sm:text-sm font-bold rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 transition-all flex items-center justify-center gap-3 active:scale-[0.99]"
+            className="w-full mb-4 py-2.5 px-4 bg-glitch-surface hover:bg-glitch-card text-text-primary text-xs sm:text-sm font-bold rounded-xl shadow-sm border border-glitch-border transition-all flex items-center justify-center gap-3 active:scale-[0.99] min-h-[44px]"
           >
             <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
               <path
@@ -110,10 +132,10 @@ export const AuthModal: React.FC = () => {
           {/* Divider */}
           <div className="relative mb-4">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border dark:border-slate-800" />
+              <div className="w-full border-t border-glitch-border" />
             </div>
             <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider">
-              <span className="bg-white dark:bg-slate-900 px-3 text-text-secondary dark:text-slate-400">
+              <span className="bg-glitch-panel px-3 text-text-secondary">
                 Or Continue With Email
               </span>
             </div>
@@ -122,64 +144,64 @@ export const AuthModal: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {authModalMode === 'signup' && (
               <div>
-                <label className="block text-xs font-semibold text-text-primary dark:text-white mb-1">
+                <label className="block text-xs font-semibold text-text-primary mb-1">
                   Full Name
                 </label>
                 <div className="relative">
-                  <UserIcon className="w-4 h-4 absolute left-3 top-3 text-text-secondary dark:text-slate-400" />
+                  <UserIcon className="w-4 h-4 absolute left-3 top-3 text-text-secondary" />
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Shivansh Giri"
-                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-text-primary dark:text-white focus:border-primary focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900 outline-none transition-all"
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-glitch-border bg-glitch-ink text-text-primary focus:border-glitch-green focus:ring-1 focus:ring-glitch-green font-mono outline-none transition-all min-h-[44px]"
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-text-primary dark:text-white mb-1">
+              <label className="block text-xs font-semibold text-text-primary mb-1">
                 Student Email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-3 text-text-secondary dark:text-slate-400" />
+                <Mail className="w-4 h-4 absolute left-3 top-3 text-text-secondary" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="student@example.com"
-                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-text-primary dark:text-white focus:border-primary focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900 outline-none transition-all"
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-glitch-border bg-glitch-ink text-text-primary focus:border-glitch-green focus:ring-1 focus:ring-glitch-green font-mono outline-none transition-all min-h-[44px]"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-text-primary dark:text-white mb-1">
+              <label className="block text-xs font-semibold text-text-primary mb-1">
                 Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3 top-3 text-text-secondary dark:text-slate-400" />
+                <Lock className="w-4 h-4 absolute left-3 top-3 text-text-secondary" />
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-text-primary dark:text-white focus:border-primary focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900 outline-none transition-all"
+                  className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-glitch-border bg-glitch-ink text-text-primary focus:border-glitch-green focus:ring-1 focus:ring-glitch-green font-mono outline-none transition-all min-h-[44px]"
                 />
               </div>
             </div>
 
             {authModalMode === 'login' && (
               <div className="flex items-center justify-between text-xs">
-                <span className="text-text-secondary dark:text-slate-400">Demo Password: any</span>
+                <span className="text-text-secondary font-mono">Demo Password: any</span>
                 <button
                   type="button"
                   onClick={() => alert('Password reset link sent to your registered email.')}
-                  className="text-primary dark:text-primary-light hover:underline font-medium"
+                  className="text-glitch-green hover:brightness-110 hover:underline font-medium p-2.5 -m-2.5"
                 >
                   Forgot Password?
                 </button>
@@ -188,7 +210,7 @@ export const AuthModal: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full py-2.5 px-4 bg-primary hover:bg-primary-dark text-white text-sm font-semibold rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 bg-glitch-green hover:brightness-110 text-glitch-ink text-xs font-bold shadow-[0_0_12px_rgba(0,255,102,0.25)] rounded-lg transition-colors flex items-center justify-center gap-2 min-h-[44px]"
             >
               <span>{authModalMode === 'signup' ? 'Complete Registration' : 'Login to Account'}</span>
               <ArrowRight className="w-4 h-4" />
@@ -196,24 +218,24 @@ export const AuthModal: React.FC = () => {
           </form>
 
           {/* Demo Login Shortcut */}
-          <div className="mt-4 pt-4 border-t border-border dark:border-slate-800">
+          <div className="mt-4 pt-4 border-t border-glitch-border">
             <button
-              type="button"
-              onClick={handleDemoLogin}
-              className="w-full py-2 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-text-primary dark:text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 border border-border dark:border-slate-700"
+               type="button"
+               onClick={handleDemoLogin}
+               className="w-full py-2 px-3 bg-glitch-surface border border-glitch-border hover:bg-glitch-card text-text-primary text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 min-h-[44px]"
             >
-              <Sparkles className="w-3.5 h-3.5 text-primary dark:text-primary-light" />
-              <span>One-Click Demo Login (Shivansh Giri — Class 8)</span>
+               <Sparkles className="w-3.5 h-3.5 text-glitch-green" />
+               <span>Sign in as a Guest (1-Click Instant Access)</span>
             </button>
           </div>
 
-          <div className="mt-4 text-center text-xs text-text-secondary dark:text-slate-400">
+          <div className="mt-4 text-center text-xs text-text-secondary">
             {authModalMode === 'signup' ? (
               <p>
                 Already have an account?{' '}
                 <button
                   onClick={() => openAuthModal('login')}
-                  className="text-primary dark:text-primary-light font-semibold hover:underline"
+                  className="text-glitch-green font-semibold hover:underline p-2.5 -m-2.5"
                 >
                   Login
                 </button>
@@ -223,7 +245,7 @@ export const AuthModal: React.FC = () => {
                 Don't have an account yet?{' '}
                 <button
                   onClick={() => openAuthModal('signup')}
-                  className="text-primary dark:text-primary-light font-semibold hover:underline"
+                  className="text-glitch-green font-semibold hover:underline p-2.5 -m-2.5"
                 >
                   Create Account
                 </button>

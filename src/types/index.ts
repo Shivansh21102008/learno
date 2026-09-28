@@ -34,34 +34,6 @@ export interface Test {
   difficulty: 'Easy' | 'Medium' | 'Hard';
   questions: Question[];
   isMainExam?: boolean;
-  requiresProctoring?: boolean;
-}
-
-export interface ProctorViolation {
-  id: string;
-  type: 'head_movement' | 'unusual_noise' | 'face_missing' | 'hand_gesture' | 'unusual_activity' | 'eye_gaze';
-  timestamp: string;
-  detail: string;
-  severity: 'warning' | 'critical';
-}
-
-export interface ProctorLockout {
-  testId: string;
-  testTitle: string;
-  lockedAt: string;
-  lockedUntil: number; // Unix epoch ms: Date.now() + 24 * 60 * 60 * 1000
-  reason: string;
-}
-
-export interface DisqualificationReport {
-  testId: string;
-  testTitle: string;
-  subject: string;
-  studentClass: StudentClass;
-  reason: string;
-  violations: ProctorViolation[];
-  disqualifiedAt: string;
-  lockedUntil?: number;
 }
 
 export interface TestResult {

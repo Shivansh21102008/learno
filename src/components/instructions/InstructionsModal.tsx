@@ -8,8 +8,6 @@ import {
   LayoutDashboard,
   FileCheck2,
   Trophy,
-  User as UserIcon,
-  ShieldCheck,
   Bot,
   Sparkles,
   ArrowRight,
@@ -17,7 +15,6 @@ import {
   HelpCircle,
   Clock,
   Mic,
-  AlertTriangle,
   Lightbulb,
   CheckCircle2,
 } from 'lucide-react';
@@ -32,7 +29,7 @@ interface InstructionsModalProps {
 
 interface FeatureGuideItem {
   id: string;
-  category: 'core' | 'ai' | 'proctor' | 'exam' | 'profile';
+  category: 'core' | 'ai' | 'exam' | 'profile';
   title: string;
   location: string;
   icon: React.ReactNode;
@@ -62,7 +59,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
       category: 'core',
       title: 'Home Page & Curriculum Explorer',
       location: 'Top Navbar -> "Home"',
-      icon: <BookOpen className="w-5 h-5 text-blue-500" />,
+      icon: <BookOpen className="w-5 h-5 text-glitch-green" />,
       badge: 'Classes 5–9 Gateway',
       summary: 'The main introductory portal introducing Learno, its NCERT/CBSE curriculum mapping, and interactive previews.',
       whatHappensWhenClicked: [
@@ -84,7 +81,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
       category: 'core',
       title: 'Dashboard & Mission Control',
       location: 'Top Navbar -> "Dashboard"',
-      icon: <LayoutDashboard className="w-5 h-5 text-indigo-500" />,
+      icon: <LayoutDashboard className="w-5 h-5 text-glitch-green" />,
       badge: 'Daily Command Hub',
       summary: 'Your daily study center showing your active syllabus class, accuracy dial, streak counter, and rapid test launchers.',
       whatHappensWhenClicked: [
@@ -106,7 +103,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
       category: 'exam',
       title: '200 Problems Directory (List View & Grid View)',
       location: 'Top Navbar -> "Tests"',
-      icon: <FileCheck2 className="w-5 h-5 text-emerald-500" />,
+      icon: <FileCheck2 className="w-5 h-5 text-glitch-green" />,
       badge: '200 Distinct Chapters',
       summary: 'Every student gets 200 distinct problem tests numbered sequentially from #001 to #200 covering all 8 school subjects without duplicate fallbacks.',
       whatHappensWhenClicked: [
@@ -128,7 +125,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
       category: 'exam',
       title: '5-Option Examination Engine',
       location: 'Tests Directory -> Click "Solve"',
-      icon: <Clock className="w-5 h-5 text-amber-500" />,
+      icon: <Clock className="w-5 h-5 text-glitch-green" />,
       badge: '5 Options: A, B, C, D, E',
       summary: 'Full-screen examination interface strictly adhering to standard competitive and school testing rules.',
       whatHappensWhenClicked: [
@@ -146,29 +143,11 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
       },
     },
     {
-      id: 'proctor-guard',
-      category: 'proctor',
-      title: 'AI Proctor Guard & 24-Hour Security Lock',
-      location: 'Dashboard or Tests -> Proctored Exam',
-      icon: <ShieldCheck className="w-5 h-5 text-rose-500" />,
-      badge: 'Security & Integrity',
-      summary: 'Real-time multi-sensor artificial intelligence proctoring ensuring 100% genuine student test results.',
-      whatHappensWhenClicked: [
-        'Opens the Device Pre-Check Gate to verify camera permissions, face framing, and microphone audio level.',
-        'During the exam, AI monitors for: head turning sideways, moving out of frame, raising hands/unusual movements, and elevated room noise.',
-        'If a student accumulates 3 critical violations, they are Disqualified and locked out from retaking that exam for 24 Hours.',
-        'The disqualification modal includes a countdown timer until eligibility restores and a "Back to Home" button for clean exit.',
-      ],
-      tips: [
-        'Take proctored exams in a well-lit, quiet room and keep your face centered in the camera feed.',
-      ],
-    },
-    {
       id: 'ai-viva',
       category: 'ai',
       title: 'AI Viva Hub ("Mujhe Nahi Aata" & Professional English)',
       location: 'Dashboard -> "Start AI Viva Hub"',
-      icon: <Mic className="w-5 h-5 text-violet-500" />,
+      icon: <Mic className="w-5 h-5 text-glitch-green" />,
       badge: 'Oral Diagnostic Examiner',
       summary: 'Interactive verbal examination where the AI teacher talks directly with the student, asks oral questions, evaluates answers, and explains difficult concepts.',
       whatHappensWhenClicked: [
@@ -191,7 +170,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
       category: 'ai',
       title: 'Adjustable AI Tutor Right-Sidebar Drawer',
       location: 'Top Navbar -> "AI Tutor" Button',
-      icon: <Bot className="w-5 h-5 text-primary" />,
+      icon: <Bot className="w-5 h-5 text-glitch-green" />,
       badge: '24/7 Academic Study Assistant',
       summary: 'A resizable, adjustable educational companion on the right edge of your screen that answers any doubt in school subjects or Learno platform features.',
       whatHappensWhenClicked: [
@@ -215,7 +194,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
       category: 'profile',
       title: 'Achievements & Milestones',
       location: 'Top Navbar -> "Achievements"',
-      icon: <Trophy className="w-5 h-5 text-amber-500" />,
+      icon: <Trophy className="w-5 h-5 text-glitch-green" />,
       badge: 'Badges & Streaks',
       summary: 'Earn badges for consistency, precision, test completion, and speed.',
       whatHappensWhenClicked: [
@@ -236,7 +215,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
       category: 'profile',
       title: 'Profile & Class Switcher (Classes 5 to 9)',
       location: 'Top Navbar -> Class Pill or "Profile"',
-      icon: <Layers className="w-5 h-5 text-blue-600" />,
+      icon: <Layers className="w-5 h-5 text-glitch-green" />,
       badge: 'Classes 5, 6, 7, 8, 9',
       summary: 'Customize your academic profile and instantly switch your active curriculum syllabus between Classes 5, 6, 7, 8, and 9.',
       whatHappensWhenClicked: [
@@ -272,27 +251,29 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
+        role="dialog"
+        aria-modal="true"
         data-lenis-prevent
-        className="relative w-full max-w-5xl max-h-[92vh] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-border dark:border-slate-800 flex flex-col overflow-hidden transition-colors"
+        className="relative w-full max-w-5xl max-h-[92vh] bg-glitch-panel rounded-xl border border-glitch-border flex flex-col overflow-hidden transition-colors"
       >
         {/* Top Header */}
-        <div className="px-6 py-5 bg-gradient-to-r from-blue-700 via-indigo-700 to-primary text-white flex items-center justify-between flex-shrink-0">
+        <div className="px-6 py-5 bg-glitch-panel border-b border-glitch-border flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner">
+            <div className="w-11 h-11 rounded-xl bg-glitch-surface flex items-center justify-center text-glitch-green border border-glitch-border shadow-inner">
               <Compass className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-black uppercase tracking-wider text-blue-200">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
                   Learno Platform Guide
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-400 text-slate-950 text-[10px] font-black uppercase">
+                <span className="px-2 py-0.5 rounded-full bg-glitch-green/20 text-glitch-green text-[10px] font-mono font-bold uppercase border border-glitch-green/30">
                   Instructions
                 </span>
               </div>
-              <h2 className="text-lg sm:text-xl font-bold text-white">
+              <h2 className="text-lg sm:text-xl font-display font-bold text-text-primary">
                 How Learno Works & Feature Directory
               </h2>
             </div>
@@ -300,7 +281,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors"
+            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-glitch-surface hover:bg-glitch-ink border border-glitch-border text-text-secondary hover:text-text-primary transition-colors"
             title="Close Instructions"
           >
             <X className="w-5 h-5" />
@@ -308,21 +289,21 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
         </div>
 
         {/* Subheader Search & Category Filters */}
-        <div className="px-6 py-3.5 bg-slate-50 dark:bg-slate-850 border-b border-border dark:border-slate-800 flex flex-col sm:flex-row gap-3 items-center justify-between flex-shrink-0">
+        <div className="px-6 py-3.5 bg-glitch-surface border-b border-glitch-border flex flex-col sm:flex-row gap-3 items-center justify-between flex-shrink-0">
           {/* Search Input */}
           <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search features (e.g. proctor, viva, 200, tests)..."
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-border dark:border-slate-700 text-text-primary dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              placeholder="Search features (e.g. viva, tests)..."
+              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-glitch-ink border border-glitch-border font-mono text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-glitch-green focus:border-glitch-green transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary p-2 text-xs"
               >
                 Clear
               </button>
@@ -330,22 +311,21 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
           </div>
 
           {/* Category Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
             {[
               { id: 'all', label: 'All Features' },
               { id: 'core', label: 'Core & Home' },
               { id: 'exam', label: '200 Tests' },
               { id: 'ai', label: 'AI Viva & Tutor' },
-              { id: 'proctor', label: 'Proctor Guard' },
               { id: 'profile', label: 'Class & Profile' },
             ].map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                className={`px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                   activeCategory === cat.id
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'bg-white dark:bg-slate-800 text-text-secondary dark:text-slate-300 hover:text-text-primary dark:hover:text-white border border-border dark:border-slate-700'
+                    ? 'bg-glitch-green text-glitch-ink'
+                    : 'bg-glitch-surface text-text-secondary hover:text-text-primary border border-glitch-border'
                 }`}
               >
                 {cat.label}
@@ -357,14 +337,14 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
         {/* Scrollable Content Body */}
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">
           {/* Welcome Banner */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-emerald-500/10 border border-indigo-200 dark:border-indigo-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="p-4 sm:p-5 rounded-xl bg-glitch-surface border border-glitch-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="space-y-1">
-              <h3 className="text-sm sm:text-base font-bold text-text-primary dark:text-white flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <h3 className="text-sm sm:text-base font-bold text-text-primary flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-glitch-green" />
                 Complete Guide to the Learno Educational Ecosystem
               </h3>
-              <p className="text-xs text-text-secondary dark:text-slate-300 leading-relaxed">
-                Learno provides an authentic NCERT/CBSE learning system exclusively for <strong>Classes 5 to 9</strong> across <strong>8 subjects</strong> with 200 sequential chapter tests, AI viva diagnostics, 24/7 AI tutor sidebar, and proctoring security.
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Learno provides an authentic NCERT/CBSE learning system exclusively for <strong>Classes 5 to 9</strong> across <strong>8 subjects</strong> with 200 sequential chapter tests, AI viva diagnostics, 24/7 AI tutor sidebar, and comprehensive performance telemetry.
               </p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -373,7 +353,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
                   onClose();
                   onOpenAiTutor();
                 }}
-                className="px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
+                className="px-3.5 p-2.5 min-h-[44px] rounded-xl bg-glitch-green hover:brightness-110 text-glitch-ink text-xs font-bold shadow-[0_0_12px_rgba(0,255,102,0.25)] transition-all flex items-center gap-1.5"
               >
                 <Bot className="w-3.5 h-3.5" />
                 Ask AI Tutor
@@ -385,19 +365,19 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
           <div className="space-y-5">
             {filteredFeatures.length === 0 ? (
               <div className="text-center py-12 space-y-3">
-                <HelpCircle className="w-10 h-10 text-slate-400 mx-auto" />
-                <h4 className="text-sm font-bold text-text-primary dark:text-white">
+                <HelpCircle className="w-10 h-10 text-text-muted mx-auto" />
+                <h4 className="text-sm font-bold text-text-primary">
                   No features match "{searchQuery}"
                 </h4>
-                <p className="text-xs text-text-secondary dark:text-slate-400">
-                  Try searching for keywords like "test", "viva", "proctor", "class", or reset category filters.
+                <p className="text-xs text-text-secondary">
+                  Try searching for keywords like "test", "viva", "class", "profile", or reset category filters.
                 </p>
                 <button
                   onClick={() => {
                     setSearchQuery('');
                     setActiveCategory('all');
                   }}
-                  className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold"
+                  className="px-4 p-2.5 min-h-[44px] bg-glitch-green text-glitch-ink rounded-xl text-xs font-bold"
                 >
                   Reset Search
                 </button>
@@ -406,24 +386,24 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
               filteredFeatures.map((item) => (
                 <div
                   key={item.id}
-                  className="p-5 sm:p-6 rounded-2xl border border-border dark:border-slate-800 bg-white dark:bg-slate-850 hover:border-primary-300 dark:hover:border-primary-700 shadow-subtle transition-all"
+                  className="p-5 sm:p-6 rounded-xl border border-glitch-border bg-glitch-surface hover:border-glitch-green/50 transition-all"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
                     <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0 shadow-sm border border-slate-200 dark:border-slate-700">
+                      <div className="w-10 h-10 rounded-xl bg-glitch-surface flex items-center justify-center flex-shrink-0 shadow-sm border border-glitch-border text-glitch-green">
                         {item.icon}
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="text-sm sm:text-base font-bold text-text-primary dark:text-white">
+                          <h4 className="text-sm sm:text-base font-bold text-text-primary">
                             {item.title}
                           </h4>
-                          <span className="px-2.5 py-0.5 rounded-full bg-primary-50 dark:bg-primary-950/60 text-primary dark:text-primary-light text-[10px] font-extrabold border border-primary-200 dark:border-primary-800">
+                          <span className="px-2.5 py-0.5 rounded-full bg-glitch-green/10 text-glitch-green text-[10px] font-mono font-bold border border-glitch-green/20">
                             {item.badge}
                           </span>
                         </div>
-                        <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                          📍 Located at: <span className="text-primary dark:text-primary-light">{item.location}</span>
+                        <span className="text-[11px] font-mono text-text-muted">
+                          📍 Located at: <span className="text-text-secondary">{item.location}</span>
                         </span>
                       </div>
                     </div>
@@ -431,7 +411,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
                     {item.actionLabel && item.onAction && (
                       <button
                         onClick={item.onAction}
-                        className="self-start sm:self-auto px-3.5 py-2 bg-primary-50 dark:bg-primary-950/60 hover:bg-primary dark:hover:bg-primary text-primary dark:text-primary-light hover:text-white dark:hover:text-white rounded-xl text-xs font-bold transition-all border border-primary-200 dark:border-primary-800 flex items-center gap-1.5 shadow-sm"
+                        className="self-start sm:self-auto px-3.5 p-2.5 min-h-[44px] border border-glitch-border bg-glitch-card hover:bg-glitch-surface text-text-primary text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
                       >
                         <span>{item.actionLabel}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -439,17 +419,17 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
                     )}
                   </div>
 
-                  <p className="text-xs sm:text-sm text-text-secondary dark:text-slate-300 leading-relaxed mb-4">
+                  <p className="text-xs sm:text-sm text-text-secondary leading-relaxed mb-4">
                     {item.summary}
                   </p>
 
                   {/* What happens when clicked */}
-                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-border/80 dark:border-slate-800 space-y-2 mb-3">
-                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  <div className="p-3.5 rounded-xl bg-glitch-ink border border-glitch-border space-y-2 mb-3">
+                    <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-text-primary flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-glitch-green" />
                       What happens when you click / use this:
                     </span>
-                    <ul className="space-y-1.5 text-xs text-text-secondary dark:text-slate-300 pl-5 list-disc">
+                    <ul className="space-y-1.5 text-xs text-text-secondary pl-5 list-disc">
                       {item.whatHappensWhenClicked.map((action, idx) => (
                         <li key={idx} className="leading-relaxed">
                           {action}
@@ -460,10 +440,10 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
 
                   {/* Pro Tip */}
                   {item.tips.length > 0 && (
-                    <div className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/40 p-2.5 rounded-xl border border-amber-200/70 dark:border-amber-900/50">
+                    <div className="flex items-start gap-2 text-xs text-amber-300 bg-amber-950/20 p-2.5 rounded-xl border border-amber-500/30">
                       <Lightbulb className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                       <div className="leading-relaxed">
-                        <span className="font-bold">Pro Tip: </span>
+                        <span className="font-bold text-amber-400">Pro Tip: </span>
                         {item.tips[0]}
                       </div>
                     </div>
@@ -475,15 +455,15 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-850 border-t border-border dark:border-slate-800 flex items-center justify-between text-xs text-text-secondary dark:text-slate-400">
+        <div className="px-6 py-4 bg-glitch-surface border-t border-glitch-border flex items-center justify-between text-xs text-text-secondary font-mono">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-glitch-green animate-pulse" />
             <span>Learno Multi-Subject Interactive Platform • Classes 5 to 9</span>
           </div>
 
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-xl font-bold transition-colors"
+            className="px-5 p-2.5 min-h-[44px] bg-glitch-card hover:bg-glitch-surface border border-glitch-border text-text-primary rounded-xl font-bold transition-colors"
           >
             Got It, Close
           </button>

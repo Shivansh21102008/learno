@@ -4,9 +4,7 @@ import { ActiveTab, VALID_CLASSES, StudentClass } from '../types';
 import { SUBJECT_METAS, CLASS_CHAPTERS } from '../data/curriculumData';
 import { BadgeIcon } from '../components/common/BadgeIcon';
 import {
-  GraduationCap,
   ArrowRight,
-  CheckCircle2,
   Trophy,
   Target,
   Flame,
@@ -14,16 +12,12 @@ import {
   BookOpen,
   Bot,
   Sparkles,
-  ShieldCheck,
-  HelpCircle,
-  ChevronDown,
-  Compass,
   Mic,
 } from 'lucide-react';
 
 interface HomePageProps {
   setActiveTab: (tab: ActiveTab) => void;
-  onOpenClassModal: () => void;
+  onOpenClassModal?: () => void;
   onOpenInstructions?: () => void;
   onOpenAiTutor?: () => void;
 }
@@ -36,13 +30,6 @@ export const HomePage: React.FC<HomePageProps> = ({
 }) => {
   const { user, isAuthenticated, openAuthModal } = useAuth();
   const [previewClass, setPreviewClass] = useState<StudentClass>(user.class || 'Class 8');
-
-  const scrollToSection = (id: string) => {
-    const el = document.querySelector(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   const handleStartLearning = () => {
     if (!isAuthenticated) {
@@ -57,412 +44,304 @@ export const HomePage: React.FC<HomePageProps> = ({
   };
 
   return (
-    <div className="space-y-16 py-6 sm:py-10">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-border dark:border-slate-800 p-8 sm:p-12 lg:p-16 shadow-card transition-colors">
-        <div className="max-w-3xl mx-auto text-center space-y-6">
-          {/* Target Audience Chip */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-50 dark:bg-primary-950/60 border border-primary-200 dark:border-primary-800 text-primary dark:text-primary-light text-xs font-semibold">
-            <GraduationCap className="w-4 h-4" />
-            <span>Exclusively Built for Classes 5, 6, 7, 8 & 9</span>
+    <div className="space-y-16 py-6 sm:py-10 text-white relative">
+      {/* Background Cyber Grid */}
+      <div className="bg-grid pointer-events-none fixed inset-0 opacity-20 z-0" />
+
+      {/* Glitch9 Hero Section */}
+      <section className="relative overflow-hidden rounded-3xl bg-[#0A0D14]/90 border border-white/10 p-8 sm:p-14 lg:p-20 shadow-2xl backdrop-blur-2xl z-10">
+        {/* Ambient Aurora Top Glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-48 bg-[radial-gradient(ellipse_at_top,rgba(0,255,102,0.15),transparent_70%)] pointer-events-none" />
+
+        <div className="max-w-4xl mx-auto text-center space-y-7 relative z-10">
+          {/* Glitch9 Telemetry Eyebrow */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/80 border border-white/15 text-neutral-300 font-mono text-[10px] sm:text-xs tracking-[0.25em] uppercase shadow-inner">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_8px_#00FF66]" />
+            <span>CLOUD ACADEMIC RIGS // CLASSES 5–9</span>
           </div>
 
-          {/* Hero Headline */}
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-text-primary dark:text-white tracking-tight leading-tight">
-            Learn Smarter. <span className="text-primary dark:text-primary-light">Practice Better.</span>
+          {/* Glitch9 Massive Headline */}
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tighter uppercase font-display leading-[1.05]">
+            Master Any Subject.{' '}
+            <span className="text-[#00FF66] drop-shadow-[0_0_35px_rgba(0,255,102,0.65)]">
+              Zero Limits.
+            </span>
           </h1>
 
           {/* Subtitle */}
-          <p className="text-base sm:text-lg text-text-secondary dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Master your school syllabus through chapter-wise tests and track your progress with
-            Learno. Designed to make academic practice consistent, structured, and rewarding.
+          <p className="text-base sm:text-lg text-neutral-400 max-w-2xl mx-auto font-sans leading-relaxed">
+            High-performance chapter test rigs, AI Viva oral diagnostics, and 24/7 neural doubt solving.
+            Experience school curriculum transformed into an instant, lag-free academic mastery engine.
           </p>
 
-          {/* Action CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
+          {/* Glitch9 Action CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-3">
             <button
               onClick={handleStartLearning}
-              className="w-full sm:w-auto px-7 py-3.5 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm hover:shadow-lg active:scale-95"
+              className="w-full sm:w-auto px-8 py-4 bg-[#00FF66] hover:bg-[#2eff7d] text-black font-black font-mono uppercase tracking-wider rounded-xl shadow-[0_0_25px_rgba(0,255,102,0.5)] hover:shadow-[0_0_40px_rgba(0,255,102,0.7)] transition-all flex items-center justify-center gap-2.5 text-sm active:scale-95 group"
             >
-              <span>Start Learning</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>[ LAUNCH ACADEMIC RIG ]</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
 
             <button
               onClick={handleExploreTests}
-              className="w-full sm:w-auto px-7 py-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-text-primary dark:text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-sm border border-border dark:border-slate-700"
+              className="w-full sm:w-auto px-8 py-4 bg-white/[0.04] hover:bg-white/[0.08] text-white font-mono uppercase tracking-wider text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 border border-white/15 hover:border-[#00FF66]/50 backdrop-blur-md active:scale-95"
             >
-              <span>Explore Tests</span>
-              <BookOpen className="w-4 h-4 text-primary dark:text-primary-light" />
+              <span>EXPLORE 200 TESTS</span>
+              <BookOpen className="w-4 h-4 text-[#00FF66]" />
             </button>
           </div>
 
-          {/* Trust points */}
-          <div className="pt-6 border-t border-border dark:border-slate-800 flex flex-wrap items-center justify-center gap-6 text-xs text-text-secondary dark:text-slate-400 font-medium">
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-success dark:text-emerald-400" />
-              <span>200 Tests Per Curriculum</span>
+          {/* Glitch9 Telemetry Chips */}
+          <div className="pt-8 border-t border-white/10 flex flex-wrap items-center justify-center gap-4 sm:gap-8 font-mono text-[10px] sm:text-xs text-neutral-400">
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66]" />
+              <span className="tracking-widest uppercase">200 CHAPTER TESTS</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-success dark:text-emerald-400" />
-              <span>5-Option Exam Engine</span>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66]" />
+              <span className="tracking-widest uppercase">ZERO HARDWARE LAG</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-success dark:text-emerald-400" />
-              <span>NCERT & CBSE Aligned</span>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66]" />
+              <span className="tracking-widest uppercase">100% CBSE // NCERT</span>
             </div>
-          </div>
-
-          {/* Quick Jump Buttons */}
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-            <button
-              onClick={() => scrollToSection('#features-showcase')}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100/90 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all border border-border dark:border-slate-700 shadow-sm hover:scale-105 active:scale-95 group"
-            >
-              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-              <span>Explore Platform Features</span>
-              <ChevronDown className="w-3.5 h-3.5 group-hover:translate-y-0.5 transition-transform text-indigo-500" />
-            </button>
-
-            <button
-              onClick={() => scrollToSection('#curriculum-explorer')}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100/90 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all border border-border dark:border-slate-700 shadow-sm hover:scale-105 active:scale-95 group"
-            >
-              <Compass className="w-3.5 h-3.5 text-primary" />
-              <span>View Syllabus (Classes 5–9)</span>
-              <ChevronDown className="w-3.5 h-3.5 group-hover:translate-y-0.5 transition-transform text-primary" />
-            </button>
           </div>
         </div>
-
-        {/* Ambient Gradient Orbs */}
-        <div className="absolute -top-32 -left-32 w-80 h-80 rounded-full bg-blue-500/15 dark:bg-blue-600/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-indigo-500/15 dark:bg-indigo-600/10 blur-3xl pointer-events-none" />
       </section>
 
-      {/* Highlights Bar */}
-      <section id="stats-bar" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-border dark:border-slate-800 shadow-subtle flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-primary dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+      {/* Glitch9 Telemetry Status Bar */}
+      <section id="stats-bar" className="grid grid-cols-2 lg:grid-cols-4 gap-4 z-10 relative">
+        <div className="p-5 bg-[#0A0D14]/90 rounded-2xl border border-white/10 shadow-xl flex items-center gap-4 group hover:border-[#00FF66]/50 transition-all">
+          <div className="w-12 h-12 rounded-xl bg-black border border-white/15 text-[#00FF66] flex items-center justify-center flex-shrink-0 group-hover:shadow-[0_0_15px_rgba(0,255,102,0.4)]">
             <Layers className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-xl font-extrabold text-text-primary dark:text-white">200 Tests</div>
-            <div className="text-xs text-text-secondary dark:text-slate-400">Chapter-wise curriculum</div>
+            <div className="text-xl font-black font-mono text-white">200 TESTS</div>
+            <div className="font-mono text-[10px] text-neutral-400 uppercase tracking-wider">RIG DIRECTORY</div>
           </div>
         </div>
 
-        <div className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-border dark:border-slate-800 shadow-subtle flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-success dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+        <div className="p-5 bg-[#0A0D14]/90 rounded-2xl border border-white/10 shadow-xl flex items-center gap-4 group hover:border-[#00FF66]/50 transition-all">
+          <div className="w-12 h-12 rounded-xl bg-black border border-white/15 text-[#00FF66] flex items-center justify-center flex-shrink-0 group-hover:shadow-[0_0_15px_rgba(0,255,102,0.4)]">
             <Target className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-xl font-extrabold text-text-primary dark:text-white">Instant Accuracy</div>
-            <div className="text-xs text-text-secondary dark:text-slate-400">Real-time performance analytics</div>
+            <div className="text-xl font-black font-mono text-white">INSTANT FPS</div>
+            <div className="font-mono text-[10px] text-neutral-400 uppercase tracking-wider">REAL-TIME ACCURACY</div>
           </div>
         </div>
 
-        <div className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-border dark:border-slate-800 shadow-subtle flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-warning dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+        <div className="p-5 bg-[#0A0D14]/90 rounded-2xl border border-white/10 shadow-xl flex items-center gap-4 group hover:border-[#00FF66]/50 transition-all">
+          <div className="w-12 h-12 rounded-xl bg-black border border-white/15 text-[#00FF66] flex items-center justify-center flex-shrink-0 group-hover:shadow-[0_0_15px_rgba(0,255,102,0.4)]">
             <Flame className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-xl font-extrabold text-text-primary dark:text-white">Daily Streaks</div>
-            <div className="text-xs text-text-secondary dark:text-slate-400">Habit-building practice</div>
+            <div className="text-xl font-black font-mono text-white">DAILY STREAK</div>
+            <div className="font-mono text-[10px] text-neutral-400 uppercase tracking-wider">COMBO MULTIPLIER</div>
           </div>
         </div>
 
-        <div className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-border dark:border-slate-800 shadow-subtle flex items-center gap-4 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0">
+        <div className="p-5 bg-[#0A0D14]/90 rounded-2xl border border-white/10 shadow-xl flex items-center gap-4 group hover:border-[#00FF66]/50 transition-all">
+          <div className="w-12 h-12 rounded-xl bg-black border border-white/15 text-[#00FF66] flex items-center justify-center flex-shrink-0 group-hover:shadow-[0_0_15px_rgba(0,255,102,0.4)]">
             <Trophy className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-xl font-extrabold text-text-primary dark:text-white">Achievement Badges</div>
-            <div className="text-xs text-text-secondary dark:text-slate-400">Milestones & rewards</div>
+            <div className="text-xl font-black font-mono text-white">ACHIEVEMENTS</div>
+            <div className="font-mono text-[10px] text-neutral-400 uppercase tracking-wider">MEDALS & REPUTATION</div>
           </div>
         </div>
       </section>
 
-      {/* 🌟 Interactive Feature Showcase */}
-      <section id="features-showcase" className="space-y-6">
+      {/* Glitch9 Feature Showcase: Academic Engines */}
+      <section id="features-showcase" className="space-y-6 z-10 relative">
         <div className="text-center max-w-2xl mx-auto space-y-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-950/60 text-primary dark:text-primary-light text-xs font-extrabold uppercase tracking-wide border border-primary-200 dark:border-primary-800">
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#00FF66] inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00FF66]/10 border border-[#00FF66]/30">
             <Sparkles className="w-3.5 h-3.5" />
-            Learno Intelligent Ecosystem
+            INTELLIGENT CLOUD RIGS
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary dark:text-white">
-            Built for Academic Excellence
+          <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white uppercase font-sans">
+            Engineered For Pure Performance
           </h2>
-          <p className="text-xs sm:text-sm text-text-secondary dark:text-slate-400">
-            Discover the comprehensive suite of educational tools built exclusively for Classes 5 to 9.
+          <p className="font-mono text-xs text-neutral-400 tracking-wider">
+            Zero friction learning ecosystem built exclusively for Classes 5 to 9.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Card 1: 200 Problems Engine */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-border dark:border-slate-800 shadow-card hover:border-primary hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
+          {/* Card 1: 200 Problems Rig */}
+          <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_30px_rgba(0,255,102,0.15)] transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-primary dark:text-blue-400 flex items-center justify-center font-bold text-lg shadow-sm group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-xl bg-black border border-white/15 text-white flex items-center justify-center font-bold text-lg group-hover:scale-105 group-hover:border-[#00FF66] transition-all">
                 📋
               </div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-text-primary dark:text-white">200 Problems</h3>
-                <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-[10px] font-black uppercase">
+              <div className="flex items-center justify-between">
+                <h3 className="font-mono text-sm font-bold text-white uppercase tracking-wider">200 Tests Rig</h3>
+                <span className="px-2 py-0.5 rounded font-mono bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/30 text-[9px] font-bold">
                   #001–#200
                 </span>
               </div>
-              <p className="text-xs text-text-secondary dark:text-slate-400 leading-relaxed">
-                200 distinct chapter tests per class. Switch between the sequential List View and Subject Grid View with concept tags.
+              <p className="text-xs text-neutral-400 font-sans leading-relaxed">
+                200 chapter assessment rigs per class. Instant switch between List Directory and Subject Rig View.
               </p>
             </div>
             <button
               onClick={() => setActiveTab('tests')}
-              className="mt-5 w-full py-2.5 px-4 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-primary text-primary dark:text-blue-300 hover:text-white rounded-xl text-xs font-bold transition-all border border-blue-200 dark:border-blue-900 flex items-center justify-center gap-1.5"
+              className="mt-5 w-full py-2.5 px-4 rounded-xl bg-white/[0.04] hover:bg-[#00FF66] text-neutral-200 hover:text-black font-mono font-bold text-xs uppercase tracking-wider transition-all border border-white/15 hover:border-[#00FF66] flex items-center justify-center gap-1.5"
             >
-              <span>Solve Problems</span>
+              <span>[ RUN TESTS ]</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
           {/* Card 2: AI Viva Hub */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-border dark:border-slate-800 shadow-card hover:border-violet-500 hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
+          <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_30px_rgba(0,255,102,0.15)] transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold text-lg shadow-sm group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-xl bg-black border border-white/15 text-white flex items-center justify-center font-bold text-lg group-hover:scale-105 group-hover:border-[#00FF66] transition-all">
                 🎙️
               </div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-text-primary dark:text-white">AI Viva Hub</h3>
-                <span className="px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 text-[10px] font-black uppercase">
-                  Oral Viva
+              <div className="flex items-center justify-between">
+                <h3 className="font-mono text-sm font-bold text-white uppercase tracking-wider">AI Viva Hub</h3>
+                <span className="px-2 py-0.5 rounded font-mono bg-violet-500/10 text-violet-400 border border-violet-500/30 text-[9px] font-bold">
+                  VOICE RIG
                 </span>
               </div>
-              <p className="text-xs text-text-secondary dark:text-slate-400 leading-relaxed">
-                Interactive voice examiner. Includes 💡 "Mujhe Nahi Aata" concept teacher explanation and full professional English oral diagnostics.
+              <p className="text-xs text-neutral-400 font-sans leading-relaxed">
+                Interactive voice examiner with concept tutor support and full executive English fluency scoring.
               </p>
             </div>
             <button
               onClick={() => setActiveTab('dashboard')}
-              className="mt-5 w-full py-2.5 px-4 rounded-xl bg-violet-50 dark:bg-violet-950/60 hover:bg-violet-600 text-violet-700 dark:text-violet-300 hover:text-white rounded-xl text-xs font-bold transition-all border border-violet-200 dark:border-violet-900 flex items-center justify-center gap-1.5"
+              className="mt-5 w-full py-2.5 px-4 rounded-xl bg-white/[0.04] hover:bg-[#00FF66] text-neutral-200 hover:text-black font-mono font-bold text-xs uppercase tracking-wider transition-all border border-white/15 hover:border-[#00FF66] flex items-center justify-center gap-1.5"
             >
-              <span>Launch AI Viva</span>
+              <span>[ START VIVA ]</span>
               <Mic className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Card 3: 24/7 AI Tutor Sidebar */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-border dark:border-slate-800 shadow-card hover:border-emerald-500 hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
+          {/* Card 3: Term Exams */}
+          <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_30px_rgba(0,255,102,0.15)] transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-lg shadow-sm group-hover:scale-110 transition-transform">
-                🤖
+              <div className="w-12 h-12 rounded-xl bg-black border border-white/15 text-white flex items-center justify-center font-bold text-lg group-hover:scale-105 group-hover:border-[#00FF66] transition-all">
+                🏆
               </div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-text-primary dark:text-white">AI Tutor Sidebar</h3>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[10px] font-black uppercase">
-                  Adjustable
+              <div className="flex items-center justify-between">
+                <h3 className="font-mono text-sm font-bold text-white uppercase tracking-wider">Term Exams</h3>
+                <span className="px-2 py-0.5 rounded font-mono bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[9px] font-bold">
+                  TERMS 1–3
                 </span>
               </div>
-              <p className="text-xs text-text-secondary dark:text-slate-400 leading-relaxed">
-                Ask any doubt across all 8 subjects. Expand into Full Page mode or use as a right-side drawer with voice read-aloud and mic input.
+              <p className="text-xs text-neutral-400 font-sans leading-relaxed">
+                Full-length term assessment rigs covering all core curriculum subjects in one single assessment.
               </p>
             </div>
             <button
-              onClick={() => onOpenAiTutor?.()}
-              className="mt-5 w-full py-2.5 px-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-600 text-emerald-700 dark:text-emerald-300 hover:text-white rounded-xl text-xs font-bold transition-all border border-emerald-200 dark:border-emerald-900 flex items-center justify-center gap-1.5"
+              onClick={() => setActiveTab('tests')}
+              className="mt-5 w-full py-2.5 px-4 rounded-xl bg-white/[0.04] hover:bg-[#00FF66] text-neutral-200 hover:text-black font-mono font-bold text-xs uppercase tracking-wider transition-all border border-white/15 hover:border-[#00FF66] flex items-center justify-center gap-1.5"
             >
-              <span>Ask AI Tutor</span>
-              <Bot className="w-3.5 h-3.5" />
+              <span>[ TAKE EXAM ]</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Card 4: Platform Guide & Instructions */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-border dark:border-slate-800 shadow-card hover:border-amber-500 hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
+          {/* Card 4: 24/7 Neural AI Tutor */}
+          <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_30px_rgba(0,255,102,0.15)] transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-lg shadow-sm group-hover:scale-110 transition-transform">
-                🧭
+              <div className="w-12 h-12 rounded-xl bg-black border border-white/15 text-white flex items-center justify-center font-bold text-lg group-hover:scale-105 group-hover:border-[#00FF66] transition-all">
+                🤖
               </div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-text-primary dark:text-white">Instructions</h3>
-                <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-[10px] font-black uppercase">
-                  Guide
+              <div className="flex items-center justify-between">
+                <h3 className="font-mono text-sm font-bold text-white uppercase tracking-wider">Neural Tutor</h3>
+                <span className="px-2 py-0.5 rounded font-mono bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/30 text-[9px] font-bold">
+                  24/7 LIVE
                 </span>
               </div>
-              <p className="text-xs text-text-secondary dark:text-slate-400 leading-relaxed">
-                Complete searchable guide explaining every feature, proctoring security rules, and what happens when you click any button.
+              <p className="text-xs text-neutral-400 font-sans leading-relaxed">
+                Instant doubt clearing powered by advanced academic LLMs. Audio speech synthesis and formula rendering.
               </p>
             </div>
             <button
-              onClick={() => onOpenInstructions?.()}
-              className="mt-5 w-full py-2.5 px-4 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-600 text-amber-700 dark:text-amber-300 hover:text-white rounded-xl text-xs font-bold transition-all border border-amber-200 dark:border-amber-900 flex items-center justify-center gap-1.5"
+              onClick={onOpenAiTutor}
+              className="mt-5 w-full py-2.5 px-4 rounded-xl bg-[#00FF66] hover:bg-[#2eff7d] text-black font-mono font-black text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(0,255,102,0.4)] transition-all flex items-center justify-center gap-1.5"
             >
-              <span>Open Guide</span>
-              <HelpCircle className="w-3.5 h-3.5" />
+              <span>[ OPEN AI COPILOT ]</span>
+              <Bot className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       </section>
 
-      {/* Curriculum Explorer: Interactive Preview for Classes 5 to 9 */}
-      <section id="curriculum-explorer" className="bg-white dark:bg-slate-900 rounded-3xl border border-border dark:border-slate-800 p-6 sm:p-10 shadow-card transition-colors">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      {/* Glitch9 Subject Rig Library */}
+      <section id="curriculum-explorer" className="space-y-8 z-10 relative">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/10 pb-5">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-primary dark:text-primary-light">
-              Curriculum Explorer
-            </span>
-            <h2 className="text-2xl font-bold text-text-primary dark:text-white mt-1">
-              Explore Syllabus for Classes 5–9
+            <div className="font-mono text-[10px] text-[#00FF66] tracking-[0.3em] uppercase mb-1">
+              [ ACADEMIC RIG LIBRARY ]
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase font-sans">
+              Supported Subject Rigs
             </h2>
-            <p className="text-xs sm:text-sm text-text-secondary dark:text-slate-400">
-              See the exact chapters and subjects available for each class.
-            </p>
           </div>
 
-          {/* Class Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-border dark:border-slate-700 overflow-x-auto">
-            {VALID_CLASSES.map((c) => {
-              const isSelected = previewClass === c;
-              return (
-                <button
-                  key={c}
-                  onClick={() => setPreviewClass(c)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
-                    isSelected
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-text-secondary dark:text-slate-300 hover:text-text-primary dark:hover:text-white'
-                  }`}
-                >
-                  {c}
-                </button>
-              );
-            })}
+          {/* Class Switcher Buttons in Glitch9 Style */}
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black border border-white/15">
+            {VALID_CLASSES.map((cls) => (
+              <button
+                key={cls}
+                onClick={() => setPreviewClass(cls)}
+                className={`px-3 py-1.5 rounded-lg font-mono text-xs font-bold uppercase transition-all ${
+                  previewClass === cls
+                    ? 'bg-[#00FF66] text-black shadow-[0_0_12px_rgba(0,255,102,0.5)]'
+                    : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                {cls.replace('Class ', 'C')}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Subjects Grid for Selected Class */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {Object.entries(CLASS_CHAPTERS[previewClass]).map(([subjName, chapters]) => {
-            const meta = SUBJECT_METAS[subjName];
+        {/* Subject Rig Grid (styled as AAA game cards on Glitch9) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {Object.values(SUBJECT_METAS).map((subj) => {
+            const count = CLASS_CHAPTERS[previewClass]?.[subj.name]?.length || 0;
             return (
               <div
-                key={subjName}
-                className="p-5 rounded-2xl border border-border dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/60 hover:bg-white dark:hover:bg-slate-800 hover:shadow-card hover:border-primary-200 dark:hover:border-primary-800 transition-all flex flex-col justify-between"
+                key={subj.name}
+                onClick={() => setActiveTab('tests')}
+                className="group relative overflow-hidden rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] p-5 shadow-xl hover:shadow-[0_0_30px_rgba(0,255,102,0.2)] transition-all duration-300 cursor-pointer flex flex-col justify-between"
               >
-                <div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-sm shadow-sm"
-                      style={{ backgroundColor: meta.bgColor, color: meta.color }}
-                    >
-                      <BadgeIcon name={meta.iconName} className="w-5 h-5" />
+                {/* Ambient glow on card hover */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#00FF66]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+                <div className="space-y-4 relative z-10">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-xl bg-[#00FF66]/10 border border-[#00FF66]/30 flex items-center justify-center text-[#00FF66] group-hover:scale-110 transition-transform">
+                      <BadgeIcon name={subj.iconName} className="w-5 h-5" />
                     </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-text-primary dark:text-white">{subjName}</h3>
-                      <span className="text-[11px] text-text-secondary dark:text-slate-400 font-medium">
-                        {meta.testCount} Practice Tests • {chapters.length} Chapters
-                      </span>
-                    </div>
+                    <span className="font-mono text-[9px] uppercase px-2 py-0.5 rounded border border-white/15 bg-black/60 text-[#00FF66]">
+                      {count} RIGS
+                    </span>
                   </div>
 
-                  <p className="text-xs text-text-secondary dark:text-slate-400 mb-3 leading-relaxed">
-                    {meta.description}
-                  </p>
-
-                  <div className="space-y-1.5">
-                    {chapters.slice(0, 3).map((ch, idx) => (
-                      <div
-                        key={idx}
-                        className="text-xs text-text-primary dark:text-slate-200 flex items-center gap-2 bg-white dark:bg-slate-800 px-2.5 py-1.5 rounded-lg border border-border/80 dark:border-slate-700/80"
-                      >
-                        <span className="w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-bold text-text-secondary dark:text-slate-300 flex items-center justify-center">
-                          {idx + 1}
-                        </span>
-                        <span className="truncate">{ch}</span>
-                      </div>
-                    ))}
-                    {chapters.length > 3 && (
-                      <div className="text-[11px] text-primary dark:text-primary-light font-semibold pl-2">
-                        + {chapters.length - 3} more chapters in {previewClass}
-                      </div>
-                    )}
+                  <div>
+                    <h3 className="font-sans font-bold text-base text-white group-hover:text-[#00FF66] transition-colors">
+                      {subj.name}
+                    </h3>
+                    <p className="font-mono text-[10px] text-neutral-400 tracking-wider mt-0.5">
+                      NCERT // CBSE SYLLABUS
+                    </p>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-border dark:border-slate-800 flex items-center justify-between">
-                  <span className="text-[11px] text-text-secondary dark:text-slate-400">NCERT Aligned</span>
-                  <button
-                    onClick={() => {
-                      if (user.class !== previewClass) {
-                        onOpenClassModal();
-                      } else {
-                        setActiveTab('tests');
-                      }
-                    }}
-                    className="text-xs font-bold text-primary dark:text-primary-light hover:underline flex items-center gap-1"
-                  >
-                    <span>Practice Tests</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                <div className="pt-5 border-t border-white/10 mt-4 flex items-center justify-between font-mono text-xs text-neutral-400 group-hover:text-white relative z-10">
+                  <span className="text-[10px] tracking-wider uppercase">[ LAUNCH RIG ]</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 group-hover:text-[#00FF66] transition-all" />
                 </div>
               </div>
             );
           })}
-        </div>
-      </section>
-
-      {/* How Learno Works */}
-      <section id="how-it-works" className="bg-slate-900 dark:bg-slate-900 border border-transparent dark:border-slate-800 text-white rounded-3xl p-8 sm:p-12">
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="text-xs font-bold uppercase tracking-wider text-primary-200">
-            Structured Learning Flow
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-bold mt-1">How Learno Helps You Excel</h2>
-          <p className="text-slate-300 text-xs sm:text-sm mt-2">
-            A scientifically designed practice cycle that turns school lessons into mastery.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-slate-800/80 p-6 rounded-2xl border border-slate-700">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 text-primary-200 flex items-center justify-center text-sm font-bold mb-4">
-              01
-            </div>
-            <h3 className="text-base font-bold text-white mb-2">Select Your Class & Chapter</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Choose your school class (Class 5 to 9) and navigate chapter-by-chapter according to
-              your school syllabus.
-            </p>
-          </div>
-
-          <div className="bg-slate-800/80 p-6 rounded-2xl border border-slate-700">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 text-primary-200 flex items-center justify-center text-sm font-bold mb-4">
-              02
-            </div>
-            <h3 className="text-base font-bold text-white mb-2">Timed 5-Option Tests</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Take realistic 20-question examinations under timed conditions with 5 multiple-choice
-              options and question navigator.
-            </p>
-          </div>
-
-          <div className="bg-slate-800/80 p-6 rounded-2xl border border-slate-700">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 text-primary-200 flex items-center justify-center text-sm font-bold mb-4">
-              03
-            </div>
-            <h3 className="text-base font-bold text-white mb-2">Analyze & Earn Badges</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Review full step-by-step solutions, inspect accuracy rates, build daily streaks, and
-              unlock achievement badges.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-10 text-center">
-          <button
-            onClick={handleStartLearning}
-            className="px-8 py-3.5 bg-primary hover:bg-primary-dark text-white text-sm font-bold rounded-xl shadow-lg transition-all inline-flex items-center gap-2"
-          >
-            <span>Start Practice Today</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
         </div>
       </section>
     </div>

@@ -10,13 +10,9 @@ import {
   Volume2,
   VolumeX,
   Mic,
-  MicOff,
   Copy,
   Check,
   RotateCcw,
-  BookOpen,
-  HelpCircle,
-  Lightbulb,
 } from 'lucide-react';
 
 interface AITutorSidebarProps {
@@ -30,8 +26,6 @@ interface ChatMessage {
   sender: 'ai' | 'user';
   text: string;
   timestamp: string;
-  subject?: string;
-  actionHint?: string;
 }
 
 export const AITutorSidebar: React.FC<AITutorSidebarProps> = ({
@@ -51,6 +45,14 @@ export const AITutorSidebar: React.FC<AITutorSidebarProps> = ({
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // API Key & Model Configuration (Silently configured in background via .env or localStorage)
+  const rawKey = (import.meta as any).env?.VITE_AI_TUTOR_API_KEY || localStorage.getItem('learno_ai_tutor_api_key') || '';
+  const apiKey = typeof rawKey === 'string' ? rawKey.trim().replace(/^["']|["']$/g, '') : '';
+  const rawModel = (import.meta as any).env?.VITE_AI_TUTOR_MODEL || localStorage.getItem('learno_ai_tutor_model') || 'openai/gpt-oss-120b';
+  const apiModel = typeof rawModel === 'string' ? rawModel.trim() : 'openai/gpt-oss-120b';
+  const rawEndpoint = (import.meta as any).env?.VITE_AI_TUTOR_ENDPOINT || localStorage.getItem('learno_ai_tutor_api_endpoint') || '';
+  const apiEndpoint = rawEndpoint.trim() || (apiKey.startsWith('gsk_') ? 'https://api.groq.com/openai/v1/chat/completions' : 'https://openrouter.ai/api/v1/chat/completions');
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -59,7 +61,7 @@ export const AITutorSidebar: React.FC<AITutorSidebarProps> = ({
     {
       id: 'welcome',
       sender: 'ai',
-      text: `Hello ${user?.name || 'Student'}! 👋 I am your 24/7 **Learno AI Academic Tutor** for **${currentClass}**.\n\nYou can ask me **anything**:\n- 📐 **Mathematics**: Step-by-step problem solving & geometry proofs\n- 🔬 **Science**: Physics formulas, Biology concepts & Chemistry reactions\n- 📖 **English**: Grammar rules, active/passive voice, direct/indirect speech\n- 🌍 **Social Science**: History timelines, Civics & Geography\n- 💻 **Computer / Coding**: Python loops, HTML/CSS & algorithms\n- 🇮🇳 **Hindi & Sanskrit**: व्याकरण, सन्धि, समास व शब्दरूप\n- 🗣️ **Communication**: Fluency, public speaking & polite phrasing\n- 🛡️ **Learno Platform**: How the 200 tests, proctoring & AI Viva work\n\nHow can I help you excel today?`,
+      text: `Hello ${user?.name || 'Student'}! 👋 I am your 24/7 **Learno AI Academic Tutor** for **${currentClass}**.\n\nYou can ask me **anything**:\n- 📐 **Mathematics**: Step-by-step problem solving & geometry proofs\n- 🔬 **Science**: Physics formulas, Biology concepts & Chemistry reactions\n- 📖 **English**: Grammar rules, active/passive voice, direct/indirect speech\n- 🌍 **Social Science**: History timelines, Civics & Geography\n- 💻 **Computer / Coding**: Python loops, HTML/CSS & algorithms\n- 🇮🇳 **Hindi & Sanskrit**: व्याकरण, सन्धि, समास व शब्दरूप\n- 🗣️ **Communication**: Fluency, public speaking & polite phrasing\n- 🎯 **Learno Platform**: How the 200 tests, term exams & AI Viva work\n\nHow can I help you excel today?`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -169,6 +171,26 @@ export const AITutorSidebar: React.FC<AITutorSidebarProps> = ({
   // Knowledge base generator for any question
   const generateAiTutorResponse = (query: string): string => {
     const q = query.toLowerCase().trim();
+
+    // 0. Quick arithmetic calculation (e.g. 4 + 4, 15 * 6)
+    const arithmeticMatch = q.match(/^(\d+(?:\.\d+)?)\s*([\+\-\*\/x×÷])\s*(\d+(?:\.\d+)?)$/);
+    if (arithmeticMatch) {
+      const num1 = parseFloat(arithmeticMatch[1]);
+      const op = arithmeticMatch[2];
+      const num2 = parseFloat(arithmeticMatch[3]);
+      let result = 0;
+      if (op === '+') result = num1 + num2;
+      else if (op === '-') result = num1 - num2;
+      else if (op === '*' || op === 'x' || op === '×') result = num1 * num2;
+      else if (op === '/' || op === '÷') result = num2 !== 0 ? num1 / num2 : 0;
+
+      return `**${num1} ${op} ${num2} = ${result}**\n\nNeed help with any other calculations, equations, or chapter doubts?`;
+    }
+
+    // 0.1 Friendly greetings
+    if (['hi', 'hello', 'hey', 'namaste', 'good morning', 'good afternoon', 'good evening'].includes(q) || q.startsWith('hi ') || q.startsWith('hello ')) {
+      return `Hello ${user?.name || 'there'}! 👋 How can I help you with your ${currentClass} studies or doubt clearing today?`;
+    }
 
     // 1. Math Questions
     if (q.includes('pythagor') || q.includes('triangle') || q.includes('hypotenuse')) {
@@ -353,22 +375,18 @@ Always make sure the condition in a \`while\` loop eventually becomes \`False\`,
     }
 
     // 7. Learno Platform Questions
-    if (q.includes('proctor') || q.includes('disqualif') || q.includes('violation')) {
-      return `### 🛡️ Learno AI Proctoring Guard & Security Rules
+    if (q.includes('exam') || q.includes('term') || q.includes('test')) {
+      return `### 🎯 Learno Examination System
+      
+Learno offers two primary testing modes for **${currentClass}**:
 
-Learno uses real-time computer vision and audio analysis to guarantee honest test performance:
+#### 1. 200 Chapter Practice Tests
+- Chapter-by-chapter mastery tests numbered **#001 to #200** across all 8 subjects.
+- Single-choice 5-option MCQs (A, B, C, D, E) with complete instant solutions and explanations.
 
-#### 🚨 Monitored Anomalies:
-1. **Head Turning**: Looking away from the screen for extended intervals.
-2. **Leaving Frame**: Face moving completely out of camera view.
-3. **Hand Raising / Gestures**: High hand movements or foreign device manipulation.
-4. **Noise Detection**: Loud ambient speech or voices in the room.
-
-#### 🔒 24-Hour Disqualification Lock:
-If a student accumulates 3 critical violations in a proctored exam:
-- The exam terminates immediately.
-- The student is **disqualified** and locked from retaking that exam for **24 hours**.
-- The disqualification screen displays an exact eligibility timer and a convenient *"Back to Home"* button!`;
+#### 2. Comprehensive Term Examinations
+- 3 official integrated board-level examinations combining questions across all core subjects.
+- Direct 1-click launch with timed assessment and instant comprehensive performance reports!`;
     }
 
     if (q.includes('viva') || q.includes('mujhe nahi aata') || q.includes('oral')) {
@@ -412,7 +430,7 @@ In **${currentClass}**, this topic focuses on foundational understanding and pra
 Would you like me to generate a 5-option practice MCQ on this concept, or break down a specific formula for you? Feel free to ask!`;
   };
 
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = async (textToSend?: string) => {
     const text = (textToSend || inputText).trim();
     if (!text || isThinking) return;
 
@@ -428,7 +446,95 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
     setInputText('');
     setIsThinking(true);
 
-    // Simulate AI thinking and response
+    // If API Key is provided, call live endpoint with model (openai/gpt-oss-120b)
+    if (apiKey) {
+      try {
+        const recentHistory = messages.slice(-6).map((m) => ({
+          role: m.sender === 'user' ? 'user' : 'assistant',
+          content: m.text,
+        }));
+
+        const endpoint = apiEndpoint || 'https://api.groq.com/openai/v1/chat/completions';
+
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        };
+        if (endpoint.includes('openrouter.ai')) {
+          headers['HTTP-Referer'] = window.location.origin;
+          headers['X-Title'] = 'Learno AI Tutor';
+        }
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            model: apiModel || 'openai/gpt-oss-120b',
+            messages: [
+              {
+                role: 'system',
+                content: `You are Learno's AI Academic Tutor for ${currentClass} students following the CBSE/NCERT curriculum.
+
+RULES FOR ANSWER QUALITY:
+1. ADAPTIVE LENGTH: Match your response directly to the complexity of the question.
+   - For basic arithmetic (e.g. "4 + 4", "15 * 6"), simple calculations, or short questions: Answer directly and concisely in 1-2 lines (e.g. "4 + 4 = 8").
+   - NEVER create 5-section textbook essays, counting tables, number lines, or multi-step breakdown tutorials for trivial questions like "4 + 4"!
+   - For complex concepts, multi-step math/science problems, or when the user asks "explain" or "solve step-by-step": Provide a clear, well-structured explanation with key formulas.
+2. NO UNSOLICITED FILLER: Never add unrequested sections like "Why does it work?", ASCII number lines, or "Practice Problems" unless the student explicitly asks for practice questions.
+3. TONE: Warm, natural, concise, and helpful.`,
+              },
+              ...recentHistory,
+              { role: 'user', content: text },
+            ],
+            temperature: 0.7,
+            max_tokens: 1200,
+          }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error?.message || `API status code ${res.status}`);
+        }
+
+        const data = await res.json();
+        const responseText = data.choices?.[0]?.message?.content || 'I could not generate an answer at this moment.';
+
+        const aiMsg: ChatMessage = {
+          id: `ai-${Date.now()}`,
+          sender: 'ai',
+          text: responseText,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+
+        setMessages((prev) => [...prev, aiMsg]);
+        setIsThinking(false);
+
+        if (isVoiceEnabled) {
+          speakText(responseText);
+        }
+        return;
+      } catch (err: any) {
+        console.warn('API call failed, falling back to local academic engine:', err);
+        const fallbackText = generateAiTutorResponse(text);
+        // Seamlessly return answer without technical error banners
+        const aiMsg: ChatMessage = {
+          id: `ai-${Date.now()}`,
+          sender: 'ai',
+          text: fallbackText,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+
+        setMessages((prev) => [...prev, aiMsg]);
+        setIsThinking(false);
+
+        if (isVoiceEnabled) {
+          speakText(fallbackText);
+        }
+        return;
+      }
+    }
+
+    // Default fast local academic engine
     setTimeout(() => {
       const responseText = generateAiTutorResponse(text);
       const aiMsg: ChatMessage = {
@@ -444,7 +550,7 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
       if (isVoiceEnabled) {
         speakText(responseText);
       }
-    }, 600);
+    }, 550);
   };
 
   const handleCopy = (id: string, text: string) => {
@@ -472,7 +578,7 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
     '💻 Python for-loop vs while-loop',
     '🇮🇳 सन्धि और समास में क्या अंतर है?',
     '📜 संस्कृत: पठ् धातु रूप लट् लकार',
-    '🛡️ How does AI Proctoring detect violations?',
+    '🎯 What are Comprehensive Term Examinations?',
     '🎙️ What is "Mujhe Nahi Aata" in AI Viva?',
   ];
 
@@ -483,53 +589,53 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
       {/* Backdrop (Active in sidebar mode on mobile or when clicked) */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${
           viewMode === 'fullscreen' ? 'hidden' : 'block'
         }`}
       />
 
       {/* Main Drawer / Fullscreen Panel */}
       <div
-        className={`fixed z-50 bg-white dark:bg-slate-900 border-l border-border dark:border-slate-800 shadow-2xl flex flex-col transition-all duration-300 ease-out ${
+        className={`fixed z-50 bg-[#050505] border-l border-white/10 shadow-2xl flex flex-col transition-all duration-300 ease-out font-sans ${
           viewMode === 'fullscreen'
             ? 'inset-0 w-full h-full'
             : 'top-0 right-0 bottom-0 w-full sm:w-[480px] md:w-[520px] lg:w-[560px]'
         }`}
       >
         {/* Drawer Header */}
-        <div className="px-5 py-4 bg-gradient-to-r from-blue-700 via-indigo-700 to-primary text-white flex items-center justify-between flex-shrink-0 shadow-md">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner">
+        <div className="px-5 py-4 bg-[#0A0D14] border-b border-white/10 text-white flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-[#00FF66]/10 border border-[#00FF66]/30 flex items-center justify-center text-[#00FF66] shadow-[0_0_15px_rgba(0,255,102,0.2)] flex-shrink-0">
               <Bot className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-black uppercase tracking-wider text-blue-200">
-                  Learno AI Tutor
+                <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#00FF66] truncate">
+                  LEARNO // NEURAL COPILOT
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-400 text-slate-950 text-[10px] font-black uppercase">
-                  {currentClass} 24/7
+                <span className="font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300 text-[9px] font-bold uppercase flex-shrink-0">
+                  {currentClass}
                 </span>
               </div>
-              <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-1.5">
-                <span>Academic Doubts & Guide</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <h3 className="text-xs sm:text-sm font-display font-bold text-white flex items-center gap-2 truncate mt-0.5">
+                <span>Academic Intelligence Rig</span>
+                <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse flex-shrink-0 shadow-[0_0_8px_#00FF66]" />
               </h3>
             </div>
           </div>
 
-          {/* Action buttons: Speech, View Mode, Close */}
-          <div className="flex items-center gap-1.5">
+          {/* Action buttons: Speech, View Mode, Clear, Close */}
+          <div className="flex items-center gap-1.5 flex-shrink-0 font-mono">
             {/* Audio Readout Toggle */}
             <button
               onClick={() => {
                 if (isAiSpeaking) stopSpeaking();
                 setIsVoiceEnabled(!isVoiceEnabled);
               }}
-              className={`p-2 rounded-xl transition-colors border ${
+              className={`p-2 rounded-xl transition-all border ${
                 isVoiceEnabled
-                  ? 'bg-white/20 border-white/30 text-white'
-                  : 'bg-white/5 border-white/10 text-white/60'
+                  ? 'bg-[#00FF66]/10 border-[#00FF66]/40 text-[#00FF66]'
+                  : 'bg-white/5 border-white/10 text-slate-500'
               }`}
               title={isVoiceEnabled ? 'AI Voice Enabled (Click to Mute)' : 'AI Voice Muted (Click to Enable)'}
             >
@@ -539,7 +645,7 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
             {/* Adjustable View Mode: Sidebar <-> Fullscreen */}
             <button
               onClick={() => setViewMode(viewMode === 'sidebar' ? 'fullscreen' : 'sidebar')}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors"
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors"
               title={viewMode === 'sidebar' ? 'Expand to Full Page Mode' : 'Collapse to Sidebar'}
             >
               {viewMode === 'sidebar' ? (
@@ -552,7 +658,7 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
             {/* Clear History */}
             <button
               onClick={handleClearHistory}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-colors"
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors"
               title="Clear chat history"
             >
               <RotateCcw className="w-4 h-4" />
@@ -561,8 +667,8 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-white/10 hover:bg-rose-500/80 border border-white/20 text-white transition-colors"
-              title="Close AI Tutor"
+              className="p-2 rounded-xl bg-white/5 hover:bg-rose-500/20 hover:text-rose-400 border border-white/10 text-slate-400 transition-colors"
+              title="Close Copilot"
             >
               <X className="w-4 h-4" />
             </button>
@@ -570,16 +676,16 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
         </div>
 
         {/* Suggestion Chips Banner */}
-        <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-850 border-b border-border dark:border-slate-800 flex items-center gap-2 overflow-x-auto flex-shrink-0">
-          <Sparkles className="w-3.5 h-3.5 text-primary dark:text-primary-light flex-shrink-0" />
-          <span className="text-[11px] font-extrabold uppercase tracking-wide text-text-secondary dark:text-slate-400 whitespace-nowrap">
-            Quick Topics:
+        <div className="px-4 py-2.5 bg-[#080B11] border-b border-white/10 flex items-center gap-2 overflow-x-auto flex-shrink-0 font-mono">
+          <Sparkles className="w-3.5 h-3.5 text-[#00FF66] flex-shrink-0" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap">
+            TOPICS:
           </span>
           {suggestionChips.map((chip, idx) => (
             <button
               key={idx}
               onClick={() => handleSendMessage(chip)}
-              className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-primary-50 dark:hover:bg-primary-950/60 hover:text-primary dark:hover:text-primary-light text-text-secondary dark:text-slate-300 text-[11px] font-medium border border-border dark:border-slate-700 whitespace-nowrap transition-colors"
+              className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-[#00FF66]/10 hover:border-[#00FF66]/40 text-slate-300 hover:text-[#00FF66] text-[10px] font-medium border border-white/10 whitespace-nowrap transition-colors"
             >
               {chip}
             </button>
@@ -589,7 +695,7 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
         {/* Chat Messages Container with isolated scroll */}
         <div
           data-lenis-prevent
-          className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-slate-50/50 dark:bg-[#0B0F19]"
+          className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-[#050505] bg-grid"
         >
           {messages.map((msg) => (
             <div
@@ -597,16 +703,16 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
               className={`flex gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {msg.sender === 'ai' && (
-                <div className="w-8 h-8 rounded-xl bg-primary text-white flex items-center justify-center flex-shrink-0 shadow-sm mt-1">
+                <div className="w-8 h-8 rounded-xl bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66] flex items-center justify-center flex-shrink-0 mt-1 shadow-sm">
                   <Bot className="w-4 h-4" />
                 </div>
               )}
 
               <div
-                className={`max-w-[88%] sm:max-w-[82%] rounded-2xl p-4 shadow-sm text-xs sm:text-sm leading-relaxed ${
+                className={`max-w-[88%] sm:max-w-[82%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed ${
                   msg.sender === 'user'
-                    ? 'bg-primary text-white font-medium rounded-tr-sm'
-                    : 'bg-white dark:bg-slate-850 text-text-primary dark:text-slate-200 border border-border dark:border-slate-800 rounded-tl-sm'
+                    ? 'bg-[#00FF66]/15 border border-[#00FF66]/40 text-white font-medium rounded-tr-sm shadow-[0_0_15px_rgba(0,255,102,0.1)]'
+                    : 'bg-[#0A0D14]/90 border border-white/10 text-slate-200 rounded-tl-sm shadow-card'
                 }`}
               >
                 {/* Message Content */}
@@ -620,23 +726,23 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
 
                 {/* Footer bar for AI responses */}
                 {msg.sender === 'ai' && (
-                  <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+                  <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between font-mono text-[10px] text-slate-400">
                     <span>{msg.timestamp}</span>
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => handleCopy(msg.id, msg.text)}
-                        className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                        className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
                         title="Copy text"
                       >
                         {copiedId === msg.id ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-500" />
+                          <Check className="w-3.5 h-3.5 text-[#00FF66]" />
                         ) : (
                           <Copy className="w-3.5 h-3.5" />
                         )}
                       </button>
                       <button
                         onClick={() => speakText(msg.text)}
-                        className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                        className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
                         title="Read answer aloud"
                       >
                         <Volume2 className="w-3.5 h-3.5" />
@@ -651,15 +757,15 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
           {/* Thinking indicator */}
           {isThinking && (
             <div className="flex gap-3 justify-start animate-in fade-in">
-              <div className="w-8 h-8 rounded-xl bg-primary text-white flex items-center justify-center flex-shrink-0 shadow-sm mt-1">
+              <div className="w-8 h-8 rounded-xl bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66] flex items-center justify-center flex-shrink-0 mt-1 shadow-sm">
                 <Bot className="w-4 h-4 animate-spin" />
               </div>
-              <div className="bg-white dark:bg-slate-850 rounded-2xl p-4 border border-border dark:border-slate-800 rounded-tl-sm shadow-sm flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-                <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
-                <span className="w-2 h-2 rounded-full bg-primary animate-bounce" />
-                <span className="text-xs text-text-secondary dark:text-slate-400 font-medium pl-1">
-                  AI Tutor is analyzing your question...
+              <div className="bg-[#0A0D14] rounded-2xl p-4 border border-white/10 rounded-tl-sm shadow-sm flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-bounce [animation-delay:-0.3s]" />
+                <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-bounce [animation-delay:-0.15s]" />
+                <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-bounce" />
+                <span className="font-mono text-xs text-[#00FF66] font-medium pl-1">
+                  COGNITIVE ENGINE EVALUATING PROMPT...
                 </span>
               </div>
             </div>
@@ -669,19 +775,19 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
         </div>
 
         {/* Input Bar */}
-        <div className="p-3.5 sm:p-4 bg-white dark:bg-slate-900 border-t border-border dark:border-slate-800 flex-shrink-0 space-y-2">
+        <div className="p-4 bg-[#0A0D14] border-t border-white/10 flex-shrink-0 space-y-2">
           {/* Active Speaking Status Bar */}
           {isAiSpeaking && (
-            <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs border border-indigo-200 dark:border-indigo-800">
+            <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#00FF66]/10 text-[#00FF66] text-xs border border-[#00FF66]/30 font-mono">
               <span className="flex items-center gap-1.5 font-bold">
-                <Volume2 className="w-3.5 h-3.5 animate-pulse text-indigo-600" />
-                AI Tutor is speaking aloud...
+                <Volume2 className="w-3.5 h-3.5 animate-pulse" />
+                NEURAL SYNTHESIZER SPEAKING...
               </span>
               <button
                 onClick={stopSpeaking}
-                className="text-[11px] font-bold text-rose-500 hover:underline"
+                className="text-[10px] font-bold text-rose-400 hover:underline uppercase"
               >
-                Stop Audio
+                [ STOP AUDIO ]
               </button>
             </div>
           )}
@@ -700,11 +806,11 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
               className={`p-2.5 rounded-xl border transition-all ${
                 isListening
                   ? 'bg-rose-500 text-white border-rose-600 animate-pulse'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border-border dark:border-slate-700'
+                  : 'bg-white/5 text-slate-300 hover:bg-white/10 border-white/10'
               }`}
               title={isListening ? 'Listening... click to stop' : 'Ask question by voice (Mic)'}
             >
-              {isListening ? <Mic className="w-4 h-4 animate-bounce" /> : <Mic className="w-4 h-4" />}
+              {isListening ? <Mic className="w-4 h-4 animate-bounce text-white" /> : <Mic className="w-4 h-4" />}
             </button>
 
             {/* Input Field */}
@@ -713,24 +819,24 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder={`Ask any doubt in ${currentClass} Maths, Science, English, SST, Hindi...`}
-              className="flex-1 px-4 py-2.5 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800 border border-border dark:border-slate-700 text-text-primary dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              placeholder={`Ask doubt in ${currentClass} Maths, Science, English, SST, Hindi...`}
+              className="flex-1 px-4 py-2.5 text-xs sm:text-sm rounded-xl bg-[#050505] border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:border-[#00FF66] focus:ring-1 focus:ring-[#00FF66] transition-all font-mono"
             />
 
             {/* Send Button */}
             <button
               type="submit"
               disabled={!inputText.trim() || isThinking}
-              className="p-2.5 rounded-xl bg-primary hover:bg-primary-dark disabled:opacity-50 text-white font-bold transition-all shadow-sm flex items-center justify-center"
+              className="p-2.5 rounded-xl bg-[#00FF66] hover:bg-[#00FF66]/90 disabled:opacity-40 text-black font-bold transition-all shadow-[0_0_15px_rgba(0,255,102,0.3)] flex items-center justify-center"
               title="Send question"
             >
               <Send className="w-4 h-4" />
             </button>
           </form>
 
-          <div className="flex items-center justify-between text-[10px] text-slate-400 px-1">
-            <span>Powered by Learno Curriculum AI • Strict Classes 5 to 9 Alignment</span>
-            <span>Mode: {viewMode === 'fullscreen' ? 'Full Page' : 'Sidebar'}</span>
+          <div className="flex items-center justify-between font-mono text-[9px] text-slate-400 px-1">
+            <span>LEARNO // RIG ARCHITECTURE 5–9</span>
+            <span>MODE: {viewMode === 'fullscreen' ? 'EXPANDED' : 'DRAWER'}</span>
           </div>
         </div>
       </div>

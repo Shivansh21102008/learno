@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { Test, TestResult, DisqualificationReport, ProctorLockout } from '../types';
+import { Test, TestResult } from '../types';
 import { useAuth } from './AuthContext';
 import {
   generateCurriculumTestsForClass,
@@ -11,17 +11,10 @@ import confetti from 'canvas-confetti';
 interface CurriculumContextType {
   tests: Test[];
   results: Record<string, TestResult>;
-  lockouts: Record<string, ProctorLockout>;
-  isExamLocked: (testId: string) => boolean;
-  getExamLockout: (testId: string) => ProctorLockout | null;
   activeTest: Test | null;
   activeResultModal: TestResult | null;
   reviewTestResult: TestResult | null;
   newBadgeUnlocked: string | null;
-  pendingProctorTest: Test | null;
-  proctorStream: MediaStream | null;
-  isSimulatedProctor: boolean;
-  disqualificationReport: DisqualificationReport | null;
   stats: {
     testsCompleted: number;
     testsRemaining: number;
@@ -29,12 +22,8 @@ interface CurriculumContextType {
     averageAccuracy: number;
     subjectProgress: Record<string, { total: number; completed: number; percentage: number }>;
   };
-  startTest: (testId: string, forceProctor?: boolean) => void;
+  startTest: (testId: string) => void;
   quitTest: () => void;
-  closeProctorPrecheck: () => void;
-  startProctoredExam: (stream: MediaStream | null, isSimulated: boolean) => void;
-  handleDisqualification: (report: DisqualificationReport) => void;
-  clearDisqualification: () => void;
   submitTest: (
     testId: string,
     answers: Record<number, number>,
@@ -75,41 +64,6 @@ export const CurriculumProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [activeResultModal, setActiveResultModal] = useState<TestResult | null>(null);
   const [reviewTestResult, setReviewTestResult] = useState<TestResult | null>(null);
   const [newBadgeUnlocked, setNewBadgeUnlocked] = useState<string | null>(null);
-  const [pendingProctorTest, setPendingProctorTest] = useState<Test | null>(null);
-  const [proctorStream, setProctorStream] = useState<MediaStream | null>(null);
-  const [isSimulatedProctor, setIsSimulatedProctor] = useState<boolean>(false);
-  const [disqualificationReport, setDisqualificationReport] = useState<DisqualificationReport | null>(null);
-
-  // 24-Hour Proctor Disqualification Lockouts
-  const [lockouts, setLockouts] = useState<Record<string, ProctorLockout>>(() => {
-    const saved = localStorage.getItem('learno_proctor_lockouts');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to parse saved lockouts', e);
-      }
-    }
-    return {};
-  });
-
-  // Save lockouts whenever they change
-  useEffect(() => {
-    localStorage.setItem('learno_proctor_lockouts', JSON.stringify(lockouts));
-  }, [lockouts]);
-
-  const isExamLocked = (testId: string): boolean => {
-    const lockout = lockouts[testId];
-    if (!lockout) return false;
-    return Date.now() < lockout.lockedUntil;
-  };
-
-  const getExamLockout = (testId: string): ProctorLockout | null => {
-    const lockout = lockouts[testId];
-    if (!lockout) return null;
-    if (Date.now() >= lockout.lockedUntil) return null;
-    return lockout;
-  };
 
   // Save results whenever they change
   useEffect(() => {
@@ -159,82 +113,15 @@ export const CurriculumProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
   }, [tests, results]);
 
-  const startTest = (testId: string, forceProctor?: boolean) => {
-    if (isExamLocked(testId)) {
-      const lockout = getExamLockout(testId);
-      const remainingHours = lockout
-        ? Math.ceil((lockout.lockedUntil - Date.now()) / (3600 * 1000))
-        : 24;
-      alert(`Academic Lockout Active: This proctored examination is locked for 24 hours following a recent disqualification. You are eligible to retake in approximately ${remainingHours} hours.`);
-      return;
-    }
-
+  const startTest = (testId: string) => {
     const target = tests.find((t) => t.id === testId);
     if (target) {
-      if (target.requiresProctoring || forceProctor) {
-        setPendingProctorTest(target);
-      } else {
-        setProctorStream(null);
-        setIsSimulatedProctor(false);
-        setActiveTest(target);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }
-  };
-
-  const closeProctorPrecheck = () => {
-    setPendingProctorTest(null);
-  };
-
-  const startProctoredExam = (stream: MediaStream | null, isSimulated: boolean) => {
-    if (pendingProctorTest) {
-      if (isExamLocked(pendingProctorTest.id)) {
-        alert('This proctored examination is locked due to an active 24-hour disqualification.');
-        setPendingProctorTest(null);
-        return;
-      }
-      setProctorStream(stream);
-      setIsSimulatedProctor(isSimulated);
-      setActiveTest(pendingProctorTest);
-      setPendingProctorTest(null);
+      setActiveTest(target);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  const handleDisqualification = (report: DisqualificationReport) => {
-    const lockedUntil = Date.now() + 24 * 60 * 60 * 1000;
-    const updatedReport: DisqualificationReport = {
-      ...report,
-      lockedUntil,
-    };
-    const newLockout: ProctorLockout = {
-      testId: report.testId,
-      testTitle: report.testTitle,
-      lockedAt: report.disqualifiedAt,
-      lockedUntil,
-      reason: report.reason,
-    };
-
-    setLockouts((prev) => {
-      const next = { ...prev, [report.testId]: newLockout };
-      localStorage.setItem('learno_proctor_lockouts', JSON.stringify(next));
-      return next;
-    });
-
-    setDisqualificationReport(updatedReport);
-  };
-
-  const clearDisqualification = () => {
-    setDisqualificationReport(null);
-    quitTest();
-  };
-
   const quitTest = () => {
-    if (proctorStream) {
-      proctorStream.getTracks().forEach((t) => t.stop());
-    }
-    setProctorStream(null);
-    setIsSimulatedProctor(false);
     setActiveTest(null);
   };
 
@@ -274,12 +161,6 @@ export const CurriculumProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       ...prev,
       [testId]: newResult,
     }));
-
-    if (proctorStream) {
-      proctorStream.getTracks().forEach((t) => t.stop());
-    }
-    setProctorStream(null);
-    setIsSimulatedProctor(false);
 
     setActiveTest(null);
     setActiveResultModal(newResult);
@@ -333,24 +214,13 @@ export const CurriculumProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       value={{
         tests,
         results,
-        lockouts,
-        isExamLocked,
-        getExamLockout,
         activeTest,
         activeResultModal,
         reviewTestResult,
         newBadgeUnlocked,
-        pendingProctorTest,
-        proctorStream,
-        isSimulatedProctor,
-        disqualificationReport,
         stats,
         startTest,
         quitTest,
-        closeProctorPrecheck,
-        startProctoredExam,
-        handleDisqualification,
-        clearDisqualification,
         submitTest,
         closeResultModal,
         openReviewAnswers,

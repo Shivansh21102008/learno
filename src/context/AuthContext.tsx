@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, StudentClass, VALID_CLASSES } from '../types';
 
+interface RegisteredAccount {
+  user: User;
+  password?: string;
+}
+
 interface AuthContextType {
   user: User;
   isAuthenticated: boolean;
@@ -9,7 +14,8 @@ interface AuthContextType {
   authModalMode: 'login' | 'signup';
   login: (email: string, password?: string) => boolean;
   loginWithGoogle: (googleName?: string, googleEmail?: string) => void;
-  signup: (name: string, email: string, password: string, studentClass?: StudentClass) => void;
+  loginAsGuest: () => void;
+  signup: (name: string, email: string, password: string, studentClass?: StudentClass) => boolean;
   logout: () => void;
   updateProfile: (updates: Partial<Pick<User, 'name' | 'email' | 'class' | 'avatar'>>) => void;
   changeClass: (newClass: StudentClass) => void;
@@ -20,12 +26,13 @@ interface AuthContextType {
   closeOnboarding: () => void;
   resetToDemo: () => void;
   unlockAchievement: (badgeId: string) => void;
+  accounts: Record<string, RegisteredAccount>;
 }
 
 const DEFAULT_USER: User = {
-  id: 'user_shivansh_01',
-  name: 'Shivansh Giri',
-  email: 'shivansh@example.com',
+  id: 'user_student_01',
+  name: 'Learno Student',
+  email: 'student@learno.edu',
   class: 'Class 8',
   avatar: '👨‍🎓',
   testsCompleted: 27,
@@ -44,9 +51,41 @@ const DEFAULT_USER: User = {
   createdAt: '2026-09-01T08:00:00.000Z',
 };
 
+const INITIAL_DEFAULT_ACCOUNTS: Record<string, RegisteredAccount> = {
+  'student@learno.edu': {
+    user: DEFAULT_USER,
+    password: 'password123',
+  },
+  'student.google@gmail.com': {
+    user: {
+      ...DEFAULT_USER,
+      id: 'google_student_01',
+      name: 'My Google Account',
+      email: 'student.google@gmail.com',
+      avatar: '🌐',
+    },
+    password: 'password123',
+  },
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [accounts, setAccounts] = useState<Record<string, RegisteredAccount>>(() => {
+    const saved = localStorage.getItem('learno_registered_accounts');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed === 'object' && parsed !== null) {
+          return { ...INITIAL_DEFAULT_ACCOUNTS, ...parsed };
+        }
+      } catch (e) {
+        console.error('Failed to parse registered accounts', e);
+      }
+    }
+    return INITIAL_DEFAULT_ACCOUNTS;
+  });
+
   const [user, setUser] = useState<User>(() => {
     const saved = localStorage.getItem('learno_student_user');
     if (saved) {
@@ -64,7 +103,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     const saved = localStorage.getItem('learno_is_authenticated');
-    // If user has not signed up or logged in, app strictly requires authentication first
     return saved === 'true';
   });
 
@@ -74,27 +112,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     localStorage.setItem('learno_student_user', JSON.stringify(user));
+    if (user.email) {
+      const normalized = user.email.toLowerCase();
+      setAccounts((prev) => {
+        const existing = prev[normalized];
+        const updated = {
+          ...prev,
+          [normalized]: {
+            password: existing?.password || 'password123',
+            user,
+          },
+        };
+        localStorage.setItem('learno_registered_accounts', JSON.stringify(updated));
+        return updated;
+      });
+    }
   }, [user]);
 
   useEffect(() => {
     localStorage.setItem('learno_is_authenticated', String(isAuthenticated));
   }, [isAuthenticated]);
 
-  const login = (email: string) => {
-    setUser((prev) => ({
-      ...prev,
-      email: email.trim() || prev.email,
-    }));
+  const login = (email: string, password?: string): boolean => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const account = accounts[normalizedEmail];
+
+    if (!account) {
+      // If matching current in-memory user
+      if (normalizedEmail === user.email.toLowerCase()) {
+        setIsAuthenticated(true);
+        setIsAuthModalOpen(false);
+        return true;
+      }
+      return false;
+    }
+
+    if (password && account.password && account.password !== password) {
+      return false;
+    }
+
+    // Successfully authenticated
+    setUser(account.user);
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
     return true;
   };
 
-  const loginWithGoogle = (googleName = 'Shivansh Giri', googleEmail = 'shivansh.giri@gmail.com') => {
+  const loginWithGoogle = (googleName = 'Student', googleEmail = 'student@gmail.com') => {
+    const normalizedEmail = googleEmail.trim().toLowerCase();
+    const existing = accounts[normalizedEmail];
+
+    if (existing) {
+      // Restore existing Google user data without overwriting progress
+      setUser(existing.user);
+      setIsAuthenticated(true);
+      setIsAuthModalOpen(false);
+      return;
+    }
+
     const googleUser: User = {
       id: `google_user_${Date.now()}`,
-      name: googleName,
-      email: googleEmail,
+      name: googleName.trim() || 'Google Student',
+      email: normalizedEmail,
       class: 'Class 8',
       avatar: '🌐',
       testsCompleted: 27,
@@ -105,18 +184,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       selectedSubjects: ['Mathematics', 'Science', 'English', 'Social Science', 'Computer', 'Hindi', 'Sanskrit', 'Communication'],
       createdAt: new Date().toISOString(),
     };
+
+    const updated = {
+      ...accounts,
+      [normalizedEmail]: {
+        user: googleUser,
+        password: '',
+      },
+    };
+
+    setAccounts(updated);
+    localStorage.setItem('learno_registered_accounts', JSON.stringify(updated));
     setUser(googleUser);
     setIsAuthenticated(true);
-    localStorage.setItem('learno_student_user', JSON.stringify(googleUser));
-    localStorage.setItem('learno_is_authenticated', 'true');
     setIsAuthModalOpen(false);
   };
 
-  const signup = (name: string, email: string, _password: string, studentClass: StudentClass = 'Class 8') => {
+  const loginAsGuest = () => {
+    const guestUser: User = {
+      id: `guest_user_${Date.now()}`,
+      name: 'Guest Student',
+      email: 'guest@learno.edu',
+      class: 'Class 8',
+      avatar: '🎒',
+      testsCompleted: 15,
+      totalTests: 200,
+      averageAccuracy: 80,
+      streak: 4,
+      achievements: ['first-step', 'getting-started', 'consistent-learner'],
+      selectedSubjects: ['Mathematics', 'Science', 'English', 'Social Science', 'Computer', 'Hindi', 'Sanskrit', 'Communication'],
+      createdAt: new Date().toISOString(),
+    };
+    setUser(guestUser);
+    setIsAuthenticated(true);
+    setIsAuthModalOpen(false);
+  };
+
+  const signup = (name: string, email: string, password: string, studentClass: StudentClass = 'Class 8'): boolean => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || !normalizedEmail.includes('@')) return false;
+
     const newUser: User = {
       id: `user_${Date.now()}`,
       name: name.trim() || 'Learno Student',
-      email: email.trim(),
+      email: normalizedEmail,
       class: studentClass || 'Class 8',
       avatar: '🎓',
       testsCompleted: 0,
@@ -127,9 +238,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       selectedSubjects: ['Mathematics', 'Science', 'English', 'Social Science', 'Computer', 'Hindi', 'Sanskrit', 'Communication'],
       createdAt: new Date().toISOString(),
     };
+
+    const updatedAccounts = {
+      ...accounts,
+      [normalizedEmail]: {
+        user: newUser,
+        password: password.trim(),
+      },
+    };
+
+    setAccounts(updatedAccounts);
+    localStorage.setItem('learno_registered_accounts', JSON.stringify(updatedAccounts));
     setUser(newUser);
     setIsAuthenticated(true);
     setIsAuthModalOpen(false);
+    return true;
   };
 
   const logout = () => {
@@ -196,6 +319,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         authModalMode,
         login,
         loginWithGoogle,
+        loginAsGuest,
         signup,
         logout,
         updateProfile,
@@ -207,6 +331,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         closeOnboarding,
         resetToDemo,
         unlockAchievement,
+        accounts,
       }}
     >
       {children}

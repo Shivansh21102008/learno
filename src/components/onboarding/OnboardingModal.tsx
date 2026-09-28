@@ -36,15 +36,19 @@ export const OnboardingModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-border dark:border-slate-800 overflow-hidden transition-colors">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div 
+        role="dialog" 
+        aria-modal="true"
+        className="relative w-full max-w-xl bg-glitch-panel border border-glitch-border rounded-xl shadow-2xl overflow-y-auto max-h-[92vh] transition-colors"
+      >
         {/* Banner */}
-        <div className="bg-primary px-6 py-6 text-white text-center relative">
-          <div className="w-12 h-12 rounded-2xl bg-white/10 mx-auto flex items-center justify-center mb-3 backdrop-blur-sm border border-white/20">
-            <GraduationCap className="w-7 h-7 text-white" />
+        <div className="bg-glitch-surface border-b border-glitch-border px-6 py-6 text-text-primary text-center relative">
+          <div className="w-12 h-12 rounded-xl bg-glitch-ink mx-auto flex items-center justify-center mb-3 border border-glitch-border">
+            <GraduationCap className="w-7 h-7 text-glitch-green" />
           </div>
-          <h2 className="text-2xl font-bold tracking-tight">Welcome to Learno</h2>
-          <p className="text-primary-100 text-xs sm:text-sm mt-1 max-w-md mx-auto">
+          <h2 className="text-2xl font-display font-bold tracking-tight text-glitch-green">Welcome to Learno</h2>
+          <p className="text-text-secondary text-xs sm:text-sm mt-1 max-w-md mx-auto">
             Practice your syllabus. Improve your knowledge. Track your progress.
           </p>
         </div>
@@ -54,18 +58,18 @@ export const OnboardingModal: React.FC = () => {
           {step === 1 ? (
             <div>
               <div className="mb-4">
-                <span className="text-[11px] font-bold text-primary dark:text-primary-light uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-glitch-green font-mono uppercase tracking-wider">
                   Step 1 of 2
                 </span>
-                <h3 className="text-lg font-bold text-text-primary dark:text-white mt-0.5">
+                <h3 className="text-lg font-bold text-text-primary mt-0.5">
                   Confirm Your Academic Class
                 </h3>
-                <p className="text-xs text-text-secondary dark:text-slate-400">
+                <p className="text-xs text-text-muted">
                   Learno strictly customizes syllabus and 200 practice tests based on your class.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 my-5">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 my-5">
                 {VALID_CLASSES.map((c) => {
                   const isSelected = selectedClass === c;
                   return (
@@ -73,15 +77,15 @@ export const OnboardingModal: React.FC = () => {
                       key={c}
                       type="button"
                       onClick={() => setSelectedClass(c)}
-                      className={`p-4 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
+                      className={`p-2.5 min-h-[44px] rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
                         isSelected
-                          ? 'border-primary bg-primary-50 dark:bg-primary-950/60 text-primary dark:text-primary-light ring-2 ring-primary/20 shadow-sm'
-                          : 'border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-text-primary dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-750'
+                          ? 'border-glitch-green bg-glitch-green/10 text-glitch-green ring-1 ring-glitch-green'
+                          : 'border-glitch-border bg-glitch-surface text-text-primary hover:border-glitch-green/50'
                       }`}
                     >
-                      <span className="text-base font-bold">{c}</span>
-                      <span className="text-[11px] text-text-secondary dark:text-slate-400">200 Tests</span>
-                      {isSelected && <CheckCircle2 className="w-4 h-4 text-primary dark:text-primary-light mt-1" />}
+                      <span className="text-sm font-bold">{c.replace('Class ', 'C-')}</span>
+                      <span className="text-[10px] text-text-secondary">200 Tests</span>
+                      {isSelected && <CheckCircle2 className="w-4 h-4 text-glitch-green mt-1" />}
                     </button>
                   );
                 })}
@@ -90,7 +94,7 @@ export const OnboardingModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="w-full py-2.5 bg-primary hover:bg-primary-dark text-white text-sm font-semibold rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2"
+                className="w-full min-h-[44px] p-2.5 bg-glitch-green hover:brightness-110 text-glitch-ink text-xs font-bold shadow-[0_0_12px_rgba(0,255,102,0.25)] rounded-lg transition-colors flex items-center justify-center gap-2"
               >
                 <span>Continue to Select Subjects</span>
                 <ArrowRight className="w-4 h-4" />
@@ -99,13 +103,13 @@ export const OnboardingModal: React.FC = () => {
           ) : (
             <div>
               <div className="mb-4">
-                <span className="text-[11px] font-bold text-primary dark:text-primary-light uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-glitch-green font-mono uppercase tracking-wider">
                   Step 2 of 2
                 </span>
-                <h3 className="text-lg font-bold text-text-primary dark:text-white mt-0.5">
+                <h3 className="text-lg font-bold text-text-primary mt-0.5">
                   Select Your Subjects for {selectedClass}
                 </h3>
-                <p className="text-xs text-text-secondary dark:text-slate-400">
+                <p className="text-xs text-text-muted">
                   Configure the subjects you want to practice. All subjects are included in the 200-test curriculum.
                 </p>
               </div>
@@ -118,10 +122,10 @@ export const OnboardingModal: React.FC = () => {
                       key={subjName}
                       type="button"
                       onClick={() => toggleSubject(subjName)}
-                      className={`p-3 rounded-xl border text-left flex items-center justify-between transition-all ${
+                      className={`p-3 min-h-[44px] rounded-xl border text-left flex items-center justify-between transition-all ${
                         isSelected
-                          ? 'border-primary bg-primary-50/60 dark:bg-primary-950/60 ring-1 ring-primary/20'
-                          : 'border-border dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 opacity-70'
+                          ? 'border-glitch-green bg-glitch-green/10 text-glitch-green'
+                          : 'border-glitch-border bg-glitch-surface text-text-primary hover:bg-glitch-card'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -132,15 +136,15 @@ export const OnboardingModal: React.FC = () => {
                           <BadgeIcon name={meta.iconName} className="w-4 h-4" />
                         </div>
                         <div>
-                          <div className="text-xs font-bold text-text-primary dark:text-white">{subjName}</div>
-                          <div className="text-[11px] text-text-secondary dark:text-slate-400">
+                          <div className="text-xs font-bold text-text-primary">{subjName}</div>
+                          <div className="text-[11px] text-text-secondary">
                             {meta.testCount} Practice Tests
                           </div>
                         </div>
                       </div>
                       <div
                         className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
-                          isSelected ? 'bg-primary border-primary text-white' : 'border-slate-300 dark:border-slate-600'
+                          isSelected ? 'bg-glitch-green border-glitch-green text-glitch-ink' : 'border-glitch-border'
                         }`}
                       >
                         {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
@@ -154,14 +158,14 @@ export const OnboardingModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="px-4 py-2.5 border border-border dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-text-secondary dark:text-slate-300 text-sm font-semibold rounded-lg transition-colors"
+                  className="px-4 p-2.5 min-h-[44px] border border-glitch-border bg-glitch-card hover:bg-glitch-surface text-text-primary text-xs font-bold rounded-lg transition-colors"
                 >
                   Back
                 </button>
                 <button
                   type="button"
                   onClick={handleFinish}
-                  className="flex-1 py-2.5 bg-primary hover:bg-primary-dark text-white text-sm font-semibold rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 p-2.5 min-h-[44px] bg-glitch-green hover:brightness-110 text-glitch-ink text-xs font-bold shadow-[0_0_12px_rgba(0,255,102,0.25)] rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   <span>Start Learning</span>
                   <ArrowRight className="w-4 h-4" />
