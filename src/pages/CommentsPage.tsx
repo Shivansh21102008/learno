@@ -68,7 +68,7 @@ export const OFFICIAL_LEARNO_FAMILY_ANNOUNCEMENT: CommentItem = {
   date: '02 Oct 2026',
   time: '09:00 PM',
   timestamp: '02 Oct 2026 at 09:00 PM',
-  likes: 28,
+  likes: 0,
   isAccepted: true,
   acceptedAt: 'Verified by Learno Family Director',
   adminNote: 'Director & Founder – Learno Family',
@@ -120,24 +120,36 @@ export const CommentsPage: React.FC = () => {
   const [isChangingPwd, setIsChangingPwd] = useState(false);
   const [changePwdProgress, setChangePwdProgress] = useState(0);
 
-  // Load genuine messages and ensure the official Announcement by Learno Family is always present
+  // Load genuine messages with 100% real likes (zero fake likes)
   const [comments, setComments] = useState<CommentItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const validComments = parsed.filter(
-            (c: any) =>
-              c &&
-              c.id &&
-              !c.id.startsWith('user_comment_01') &&
-              !c.id.startsWith('user_comment_02') &&
-              !c.id.startsWith('user_comment_03')
-          );
+          const validComments = parsed
+            .filter(
+              (c: any) =>
+                c &&
+                c.id &&
+                !c.id.startsWith('user_comment_01') &&
+                !c.id.startsWith('user_comment_02') &&
+                !c.id.startsWith('user_comment_03')
+            )
+            .map((c: any) => {
+              // Sanitize any previous mock/fake high like numbers
+              if (c.id === OFFICIAL_LEARNO_FAMILY_ANNOUNCEMENT.id && c.likes >= 20) {
+                return {
+                  ...c,
+                  likes: c.likedByMe ? 1 : 0,
+                };
+              }
+              return c;
+            });
+
           // Check if Learno Family announcement is already in the list
           const hasAnnouncement = validComments.some(
-            (c) => c.id === OFFICIAL_LEARNO_FAMILY_ANNOUNCEMENT.id || c.channel === 'admin'
+            (c: any) => c.id === OFFICIAL_LEARNO_FAMILY_ANNOUNCEMENT.id || c.channel === 'admin'
           );
           if (hasAnnouncement) {
             return validComments;
