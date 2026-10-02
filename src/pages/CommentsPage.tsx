@@ -2,17 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { CommentItem, CommentCategory, CommentChannel } from '../types';
 import {
+  hasAdminPasswordSet,
+  setInitialAdminPassword,
   verifyAdminPassword,
   changeAdminPassword,
-  hasCustomAdminPassword,
-  DEFAULT_INITIAL_ADMIN_PASSWORD,
 } from '../utils/adminSecurity';
 import {
   MessageSquare,
   Send,
   Star,
   CheckCircle2,
-  Shield,
   ShieldCheck,
   ThumbsUp,
   Search,
@@ -29,8 +28,8 @@ import {
   EyeOff,
   Key,
   X,
-  Cpu,
   Layers,
+  ShieldAlert,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'learno_community_comments';
@@ -63,21 +62,31 @@ export const CommentsPage: React.FC = () => {
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // 100-Layer Cryptographic Admin State
+  // 100-Layer Password State
+  const [isPasswordSet, setIsPasswordSet] = useState<boolean>(() => hasAdminPasswordSet());
   const [isAdminUnlocked, setIsAdminUnlocked] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true';
   });
 
-  // Password Unlock Modal State
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [passwordInput, setPasswordInput] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
-  const [verificationProgress, setVerificationProgress] = useState(0);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
+  // Modal 1: Set Initial Admin Password Modal (First-time setup)
+  const [isSetPasswordModalOpen, setIsSetPasswordModalOpen] = useState(false);
+  const [initialPasswordInput, setInitialPasswordInput] = useState('');
+  const [initialConfirmInput, setInitialConfirmInput] = useState('');
+  const [showInitialPwd, setShowInitialPwd] = useState(false);
+  const [isSettingPassword, setIsSettingPassword] = useState(false);
+  const [setupProgress, setSetupProgress] = useState(0);
+  const [setupError, setSetupError] = useState<string | null>(null);
 
-  // Change Password Modal State
+  // Modal 2: Unlock Admin Password Modal
+  const [isUnlockModalOpen, setIsUnlockModalOpen] = useState(false);
+  const [unlockPasswordInput, setUnlockPasswordInput] = useState('');
+  const [showUnlockPassword, setShowUnlockPassword] = useState(false);
+  const [isVerifyingUnlock, setIsVerifyingUnlock] = useState(false);
+  const [unlockProgress, setUnlockProgress] = useState(0);
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+
+  // Modal 3: Change Admin Password Modal (Requires Current Password)
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const [currentPwdInput, setCurrentPwdInput] = useState('');
   const [newPwdInput, setNewPwdInput] = useState('');
@@ -96,7 +105,6 @@ export const CommentsPage: React.FC = () => {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          // Filter out previous fake mock messages
           return parsed.filter(
             (c: any) =>
               c &&
@@ -137,15 +145,23 @@ export const CommentsPage: React.FC = () => {
     }
   }, [comments]);
 
-  // Handle switching to Admin channel (Requires Password Unlock)
+  // Handle switching to Admin Category:
+  // 1. If no password set yet: Open Set Password modal first!
+  // 2. If password set but locked: Open Unlock Password modal!
+  // 3. If unlocked: Switch directly to admin category!
   const handleSelectAdminChannel = () => {
-    if (isAdminUnlocked) {
+    if (!isPasswordSet) {
+      setIsSetPasswordModalOpen(true);
+      setSetupError(null);
+      setInitialPasswordInput('');
+      setInitialConfirmInput('');
+    } else if (isAdminUnlocked) {
       setActiveChannel('admin');
       setSelectedFilter('all');
     } else {
-      setIsPasswordModalOpen(true);
-      setPasswordError(null);
-      setPasswordInput('');
+      setIsUnlockModalOpen(true);
+      setUnlockError(null);
+      setUnlockPasswordInput('');
     }
   };
 
@@ -156,49 +172,93 @@ export const CommentsPage: React.FC = () => {
     setActiveChannel('user');
   };
 
-  // Authenticate Admin with 100-layer verification
-  const handleUnlockAdmin = async (e: React.FormEvent) => {
+  // 1. First-time: Set Admin Master Password with 100-layer encryption
+  const handleSetInitialPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!passwordInput.trim()) {
-      setPasswordError('Please enter the administrator password.');
+    if (!initialPasswordInput) {
+      setSetupError('Please enter a password.');
+      return;
+    }
+    if (initialPasswordInput.length < 4) {
+      setSetupError('Password must be at least 4 characters long.');
+      return;
+    }
+    if (initialPasswordInput !== initialConfirmInput) {
+      setSetupError('Passwords do not match. Please re-enter.');
       return;
     }
 
-    setIsVerifyingPassword(true);
-    setPasswordError(null);
-    setVerificationProgress(0);
+    setIsSettingPassword(true);
+    setSetupError(null);
+    setSetupProgress(0);
 
     try {
-      const isValid = await verifyAdminPassword(passwordInput, (layer) => {
-        setVerificationProgress(layer);
+      const res = await setInitialAdminPassword(initialPasswordInput, (layer) => {
+        setSetupProgress(layer);
+      });
+
+      if (res.success) {
+        setIsPasswordSet(true);
+        setIsAdminUnlocked(true);
+        sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+        setIsSetPasswordModalOpen(false);
+        setInitialPasswordInput('');
+        setInitialConfirmInput('');
+        setActiveChannel('admin');
+        setSelectedFilter('all');
+      } else {
+        setSetupError(res.message);
+      }
+    } catch {
+      setSetupError('Failed to initialize 100-layer cryptographic encryption.');
+    } finally {
+      setIsSettingPassword(false);
+    }
+  };
+
+  // 2. Unlock Admin Category with 100-layer verification
+  const handleUnlockAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!unlockPasswordInput.trim()) {
+      setUnlockError('Please enter your admin password.');
+      return;
+    }
+
+    setIsVerifyingUnlock(true);
+    setUnlockError(null);
+    setUnlockProgress(0);
+
+    try {
+      const isValid = await verifyAdminPassword(unlockPasswordInput, (layer) => {
+        setUnlockProgress(layer);
       });
 
       if (isValid) {
         setIsAdminUnlocked(true);
         sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
-        setIsPasswordModalOpen(false);
-        setPasswordInput('');
+        setIsUnlockModalOpen(false);
+        setUnlockPasswordInput('');
         setActiveChannel('admin');
         setSelectedFilter('all');
       } else {
-        setPasswordError('Access Denied: Incorrect password. 100-layer cryptographic check failed.');
+        setUnlockError('Access Denied: Incorrect password. 100-layer cryptographic check failed.');
       }
-    } catch (err) {
-      setPasswordError('Verification failed due to cryptographic error. Please retry.');
+    } catch {
+      setUnlockError('Cryptographic verification failed. Please try again.');
     } finally {
-      setIsVerifyingPassword(false);
+      setIsVerifyingUnlock(false);
     }
   };
 
-  // Change Admin Password (requires current password first)
+  // 3. Change Admin Password (Strictly requires current password)
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPwdInput) {
       setChangePwdError('Current admin password is required.');
       return;
     }
-    if (newPwdInput.length < 6) {
-      setChangePwdError('New password must be at least 6 characters long.');
+    if (newPwdInput.length < 4) {
+      setChangePwdError('New password must be at least 4 characters long.');
       return;
     }
     if (newPwdInput !== confirmPwdInput) {
@@ -276,7 +336,7 @@ export const CommentsPage: React.FC = () => {
     e.preventDefault();
     if (!isAdminUnlocked) {
       alert('Access Denied: Only authenticated Administrator can publish announcements.');
-      setIsPasswordModalOpen(true);
+      handleSelectAdminChannel();
       return;
     }
     if (!adminTitle.trim() || !adminContent.trim()) return;
@@ -314,8 +374,7 @@ export const CommentsPage: React.FC = () => {
   // Toggle Accept status on comment (Only Admin with password can perform this)
   const handleToggleAccept = (id: string) => {
     if (!isAdminUnlocked) {
-      setIsPasswordModalOpen(true);
-      setPasswordError('Admin Password Required: Only the administrator can accept student messages.');
+      handleSelectAdminChannel();
       return;
     }
 
@@ -383,7 +442,6 @@ export const CommentsPage: React.FC = () => {
   const channelComments = comments.filter((c) => c.channel === activeChannel);
 
   const filteredComments = channelComments.filter((item) => {
-    // Search query filter
     const matchesSearch =
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -391,7 +449,6 @@ export const CommentsPage: React.FC = () => {
 
     if (!matchesSearch) return false;
 
-    // Category filter
     if (selectedFilter === 'all') return true;
     if (selectedFilter === 'accepted') return item.isAccepted;
     return item.category === selectedFilter;
@@ -413,12 +470,12 @@ export const CommentsPage: React.FC = () => {
               {isAdminUnlocked ? (
                 <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-amber-400" />
-                  100-Layer Admin Active (Shivansh Giri)
+                  Admin Unlocked (Shivansh Giri)
                 </span>
               ) : (
                 <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-white/5 border border-white/10 text-neutral-400 flex items-center gap-1">
                   <Lock className="w-3 h-3 text-neutral-400" />
-                  Admin Protected (100-Layer Shield)
+                  {isPasswordSet ? 'Admin Protected (100-Layer Shield)' : 'Admin Password Not Set Yet'}
                 </span>
               )}
             </div>
@@ -430,7 +487,7 @@ export const CommentsPage: React.FC = () => {
             </p>
           </div>
 
-          {/* TWO MAIN MODES: USER MESSAGES vs ADMIN ANNOUNCEMENTS + ADMIN CONTROLS */}
+          {/* TWO MAIN MODES: USER MESSAGES vs ADMIN ANNOUNCEMENTS + PASSWORD CONTROLS */}
           <div className="flex flex-wrap items-center gap-2 bg-[#050505] p-1.5 rounded-xl border border-white/10 flex-shrink-0">
             <button
               type="button"
@@ -479,28 +536,39 @@ export const CommentsPage: React.FC = () => {
               </span>
             </button>
 
-            {/* If Admin is unlocked: Provide Change Password and Lock buttons */}
-            {isAdminUnlocked && (
-              <div className="flex items-center gap-1.5 pl-1 border-l border-white/10">
+            {/* Clear "Change Password" and "Lock" Options */}
+            <div className="flex items-center gap-1.5 pl-1 border-l border-white/10">
+              {isPasswordSet && (
                 <button
                   type="button"
-                  onClick={() => setIsChangePasswordModalOpen(true)}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-amber-300 border border-white/10 transition-colors"
-                  title="Change Admin Password (100-Layer Cryptographic Shield)"
+                  onClick={() => {
+                    setIsChangePasswordModalOpen(true);
+                    setChangePwdError(null);
+                    setChangePwdSuccess(null);
+                    setCurrentPwdInput('');
+                    setNewPwdInput('');
+                    setConfirmPwdInput('');
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-amber-300 border border-white/10 text-[10px] font-mono font-bold transition-colors flex items-center gap-1"
+                  title="Change Admin Password (Takes current password first)"
                 >
-                  <KeyRound className="w-3.5 h-3.5" />
+                  <KeyRound className="w-3 h-3 text-amber-400" />
+                  <span>Change Password</span>
                 </button>
+              )}
+
+              {isAdminUnlocked && (
                 <button
                   type="button"
                   onClick={handleLockAdmin}
                   className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-mono font-bold transition-colors flex items-center gap-1"
-                  title="Lock Admin Mode"
+                  title="Lock Admin Category"
                 >
                   <Lock className="w-3 h-3" />
                   <span>LOCK</span>
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -647,7 +715,7 @@ export const CommentsPage: React.FC = () => {
         </div>
       )}
 
-      {/* MODE 2: ADMIN ANNOUNCEMENTS CHANNEL (Strictly Authenticated Administrator) */}
+      {/* MODE 2: ADMIN ANNOUNCEMENTS CHANNEL */}
       {activeChannel === 'admin' && (
         <>
           {isAdminUnlocked ? (
@@ -718,7 +786,7 @@ export const CommentsPage: React.FC = () => {
               </form>
             </div>
           ) : (
-            /* Non-authenticated students: Read-only notice */
+            /* Protected notice */
             <div className="bg-[#0A0D14]/90 border border-amber-500/20 rounded-2xl p-5 shadow-card flex items-start gap-3.5">
               <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0 mt-0.5">
                 <Lock className="w-4 h-4" />
@@ -728,7 +796,7 @@ export const CommentsPage: React.FC = () => {
                   Official Admin Announcements Channel (Protected)
                 </h3>
                 <p className="text-xs text-neutral-400 leading-relaxed">
-                  Only the Administrator (<span className="text-amber-400 font-bold">Shivansh Giri</span>) can publish announcements in this category using the 100-layer admin key. Students can share their experiences and report problems in the{' '}
+                  Only the Administrator (<span className="text-amber-400 font-bold">Shivansh Giri</span>) can publish announcements in this category using the 100-layer admin password. Students can share their experiences and report problems in the{' '}
                   <button
                     type="button"
                     onClick={() => setActiveChannel('user')}
@@ -741,11 +809,11 @@ export const CommentsPage: React.FC = () => {
                 <div className="pt-2">
                   <button
                     type="button"
-                    onClick={() => setIsPasswordModalOpen(true)}
-                    className="px-3 py-1.5 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 text-amber-300 font-mono text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
+                    onClick={handleSelectAdminChannel}
+                    className="px-3.5 py-2 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 text-amber-300 font-mono text-xs font-bold rounded-lg transition-colors flex items-center gap-2"
                   >
                     <KeyRound className="w-3.5 h-3.5" />
-                    <span>Unlock Admin Mode (Password Required)</span>
+                    <span>{isPasswordSet ? 'Unlock Admin Category' : 'Set Admin Password First'}</span>
                   </button>
                 </div>
               </div>
@@ -1085,15 +1153,132 @@ export const CommentsPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 100-LAYER ADMIN AUTHENTICATION PASSWORD MODAL                             */}
+      {/* 1. INITIAL ADMIN SETUP MODAL: FIRST YOU SET THE PASSWORD                  */}
       {/* ========================================================================= */}
-      {isPasswordModalOpen && (
+      {isSetPasswordModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+          <div className="bg-[#0A0D14] border border-[#00FF66]/40 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#00FF66]/20 border border-[#00FF66]/40 text-[#00FF66] flex items-center justify-center">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#00FF66] font-bold">
+                    INITIAL ADMIN SETUP
+                  </span>
+                  <h3 className="text-base font-display font-bold text-white">
+                    Set Admin Password First
+                  </h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSetPasswordModalOpen(false)}
+                className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-neutral-300 font-mono leading-relaxed">
+              Create your secret master password. It will be encrypted through <strong>100 sequential cryptographic layers</strong>. Once set, only entering this password can unlock the admin category.
+            </p>
+
+            <form onSubmit={handleSetInitialPassword} className="space-y-3.5 font-mono text-xs">
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1">
+                  1. Set Your Admin Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showInitialPwd ? 'text' : 'password'}
+                    required
+                    value={initialPasswordInput}
+                    onChange={(e) => setInitialPasswordInput(e.target.value)}
+                    placeholder="Enter your secret password..."
+                    autoFocus
+                    className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-white/15 bg-[#050505] text-white focus:border-[#00FF66] outline-none text-sm transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowInitialPwd(!showInitialPwd)}
+                    className="absolute right-3 top-3 text-neutral-400 hover:text-white"
+                  >
+                    {showInitialPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1">
+                  2. Confirm Admin Password
+                </label>
+                <input
+                  type={showInitialPwd ? 'text' : 'password'}
+                  required
+                  value={initialConfirmInput}
+                  onChange={(e) => setInitialConfirmInput(e.target.value)}
+                  placeholder="Re-enter password to confirm..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/15 bg-[#050505] text-white focus:border-[#00FF66] outline-none text-sm transition-all"
+                />
+              </div>
+
+              {/* Progress Bar when hashing 100 layers */}
+              {isSettingPassword && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] text-[#00FF66]">
+                    <span>Encrypting 100 Cryptographic Layers:</span>
+                    <span>Layer {setupProgress} / 100</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden border border-[#00FF66]/30">
+                    <div
+                      className="h-full bg-[#00FF66] transition-all duration-75"
+                      style={{ width: `${Math.max(5, setupProgress)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {setupError && (
+                <div className="p-2.5 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  <span>{setupError}</span>
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setIsSetPasswordModalOpen(false)}
+                  className="px-4 py-2 bg-white/5 hover:bg-white/10 text-neutral-400 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSettingPassword || !initialPasswordInput || !initialConfirmInput}
+                  className="px-5 py-2.5 bg-[#00FF66] hover:bg-[#00FF66]/90 disabled:opacity-40 text-black font-bold rounded-xl text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(0,255,102,0.3)]"
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>{isSettingPassword ? 'ENCRYPTING 100 LAYERS...' : 'SET PASSWORD & UNLOCK'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 2. UNLOCK ADMIN MODAL: TAKES THE PASSWORD TO ENTER ADMIN CATEGORY          */}
+      {/* ========================================================================= */}
+      {isUnlockModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
           <div className="bg-[#0A0D14] border border-amber-500/40 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center">
-                  <KeyRound className="w-5 h-5" />
+                  <Lock className="w-5 h-5" />
                 </div>
                 <div>
                   <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-400 font-bold">
@@ -1107,8 +1292,8 @@ export const CommentsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  setIsPasswordModalOpen(false);
-                  setPasswordError(null);
+                  setIsUnlockModalOpen(false);
+                  setUnlockError(null);
                 }}
                 className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10"
               >
@@ -1120,9 +1305,9 @@ export const CommentsPage: React.FC = () => {
             <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 font-mono text-[11px] text-neutral-300 flex items-start gap-2">
               <Layers className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
               <div className="space-y-0.5">
-                <span className="text-amber-400 font-bold">100-Layer Cryptographic Shield:</span>
+                <span className="text-amber-400 font-bold">100-Layer Verification Shield:</span>
                 <p className="text-[10px] text-neutral-400 leading-tight">
-                  Protected by 100 sequential SHA-256 digest layers with salt & pepper. Only the platform administrator can unlock access.
+                  Enter your admin password. It will be verified against 100 sequential SHA-256 cryptographic layers.
                 </p>
               </div>
             </div>
@@ -1134,59 +1319,62 @@ export const CommentsPage: React.FC = () => {
                 </label>
                 <div className="relative">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showUnlockPassword ? 'text' : 'password'}
                     required
-                    value={passwordInput}
-                    onChange={(e) => setPasswordInput(e.target.value)}
+                    value={unlockPasswordInput}
+                    onChange={(e) => setUnlockPasswordInput(e.target.value)}
                     placeholder="Enter password..."
                     autoFocus
                     className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-white/15 bg-[#050505] text-white focus:border-amber-400 outline-none text-sm transition-all"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => setShowUnlockPassword(!showUnlockPassword)}
                     className="absolute right-3 top-3 text-neutral-400 hover:text-white"
-                    title={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showUnlockPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
               {/* Progress Bar when computing 100 layers */}
-              {isVerifyingPassword && (
+              {isVerifyingUnlock && (
                 <div className="space-y-1">
                   <div className="flex justify-between text-[10px] text-amber-400">
                     <span>Cryptographic Verification:</span>
-                    <span>Layer {verificationProgress} / 100</span>
+                    <span>Layer {unlockProgress} / 100</span>
                   </div>
                   <div className="w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden border border-amber-500/30">
                     <div
                       className="h-full bg-amber-400 transition-all duration-75"
-                      style={{ width: `${Math.max(5, verificationProgress)}%` }}
+                      style={{ width: `${Math.max(5, unlockProgress)}%` }}
                     />
                   </div>
                 </div>
               )}
 
-              {passwordError && (
+              {unlockError && (
                 <div className="p-2.5 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                  <span>{passwordError}</span>
+                  <span>{unlockError}</span>
                 </div>
               )}
 
               <div className="pt-2 flex items-center justify-between">
-                <span className="text-[10px] text-neutral-500">
-                  Default initial: <code className="text-amber-400">shivansh@admin</code>
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsUnlockModalOpen(false)}
+                  className="px-4 py-2 bg-white/5 hover:bg-white/10 text-neutral-400 rounded-xl"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
-                  disabled={isVerifyingPassword || !passwordInput.trim()}
+                  disabled={isVerifyingUnlock || !unlockPasswordInput.trim()}
                   className="px-5 py-2.5 bg-amber-400 hover:bg-amber-300 disabled:opacity-40 text-black font-bold rounded-xl text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)]"
                 >
                   <Unlock className="w-3.5 h-3.5" />
-                  <span>{isVerifyingPassword ? 'VERIFYING...' : 'VERIFY & UNLOCK'}</span>
+                  <span>{isVerifyingUnlock ? 'VERIFYING 100 LAYERS...' : 'VERIFY & UNLOCK'}</span>
                 </button>
               </div>
             </form>
@@ -1195,7 +1383,7 @@ export const CommentsPage: React.FC = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* CHANGE ADMIN PASSWORD MODAL (Strictly requires current password)          */}
+      {/* 3. CHANGE PASSWORD MODAL: REQUIRES CURRENT PASSWORD FIRST                 */}
       {/* ========================================================================= */}
       {isChangePasswordModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
@@ -1228,14 +1416,14 @@ export const CommentsPage: React.FC = () => {
             </div>
 
             <p className="text-xs text-neutral-400 leading-relaxed font-mono">
-              To change your password, you must enter your current password first. The new password will be locked with 100 cryptographic layers.
+              To change your password, you must enter your <strong>current password</strong> first. No one can change the password without knowing the current password.
             </p>
 
             <form onSubmit={handleChangePassword} className="space-y-3 font-mono text-xs">
-              {/* Current Password */}
+              {/* Current Password (Mandatory) */}
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1">
-                  1. Current Admin Password (Required)
+                <label className="block text-[10px] uppercase tracking-wider text-amber-400 font-bold mb-1">
+                  1. Current Admin Password (Required to Verify Identity)
                 </label>
                 <div className="relative">
                   <input
@@ -1243,7 +1431,7 @@ export const CommentsPage: React.FC = () => {
                     required
                     value={currentPwdInput}
                     onChange={(e) => setCurrentPwdInput(e.target.value)}
-                    placeholder="Enter current password..."
+                    placeholder="Enter your current password..."
                     className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-white/15 bg-[#050505] text-white focus:border-[#00FF66] outline-none text-sm transition-all"
                   />
                   <button
@@ -1259,7 +1447,7 @@ export const CommentsPage: React.FC = () => {
               {/* New Password */}
               <div>
                 <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1">
-                  2. New Admin Password (Min. 6 chars)
+                  2. New Admin Password
                 </label>
                 <div className="relative">
                   <input
@@ -1267,7 +1455,7 @@ export const CommentsPage: React.FC = () => {
                     required
                     value={newPwdInput}
                     onChange={(e) => setNewPwdInput(e.target.value)}
-                    placeholder="Enter new secret password..."
+                    placeholder="Enter new password..."
                     className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-white/15 bg-[#050505] text-white focus:border-[#00FF66] outline-none text-sm transition-all"
                   />
                   <button
@@ -1290,7 +1478,7 @@ export const CommentsPage: React.FC = () => {
                   required
                   value={confirmPwdInput}
                   onChange={(e) => setConfirmPwdInput(e.target.value)}
-                  placeholder="Re-enter new secret password..."
+                  placeholder="Re-enter new password..."
                   className="w-full px-3.5 py-2.5 rounded-xl border border-white/15 bg-[#050505] text-white focus:border-[#00FF66] outline-none text-sm transition-all"
                 />
               </div>
