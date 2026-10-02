@@ -52,6 +52,28 @@ const getCurrentTime = (): string => {
   }); // e.g. "09:05 PM"
 };
 
+// Official Announcement by Learno Family (Always present as platform anchor)
+export const OFFICIAL_LEARNO_FAMILY_ANNOUNCEMENT: CommentItem = {
+  id: 'announcement_learno_family_official_01',
+  channel: 'admin',
+  authorName: 'Shivansh Giri',
+  authorEmail: 'shivanshgiri.official@gmail.com',
+  authorAvatar: '👨‍💻',
+  authorClass: 'Learno Family & Director',
+  isAdmin: true,
+  category: 'suggestion',
+  title: '📢 Official Announcement by Learno Family',
+  content:
+    'Welcome to Learno! We are proud to present our complete academic platform with customized rigs for Classes 5 to 9, dynamic chapter-wise practice tests with zero question repetition, bilingual AI Tutor with hands-free Jarvis mode, and instant feedback. Students can post their preparation stories or report any problems here. Keep learning and practicing as one Learno family!',
+  date: '02 Oct 2026',
+  time: '09:00 PM',
+  timestamp: '02 Oct 2026 at 09:00 PM',
+  likes: 28,
+  isAccepted: true,
+  acceptedAt: 'Verified by Learno Family Director',
+  adminNote: 'Director & Founder – Learno Family',
+};
+
 export const CommentsPage: React.FC = () => {
   const { user } = useAuth();
 
@@ -98,28 +120,35 @@ export const CommentsPage: React.FC = () => {
   const [isChangingPwd, setIsChangingPwd] = useState(false);
   const [changePwdProgress, setChangePwdProgress] = useState(0);
 
-  // Load genuine messages only (clean out any old demo/mock comments)
+  // Load genuine messages and ensure the official Announcement by Learno Family is always present
   const [comments, setComments] = useState<CommentItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          return parsed.filter(
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const validComments = parsed.filter(
             (c: any) =>
               c &&
               c.id &&
-              !c.id.startsWith('admin_broadcast_01') &&
               !c.id.startsWith('user_comment_01') &&
               !c.id.startsWith('user_comment_02') &&
               !c.id.startsWith('user_comment_03')
           );
+          // Check if Learno Family announcement is already in the list
+          const hasAnnouncement = validComments.some(
+            (c) => c.id === OFFICIAL_LEARNO_FAMILY_ANNOUNCEMENT.id || c.channel === 'admin'
+          );
+          if (hasAnnouncement) {
+            return validComments;
+          }
+          return [OFFICIAL_LEARNO_FAMILY_ANNOUNCEMENT, ...validComments];
         }
       }
     } catch {
       // ignore parse error
     }
-    return [];
+    return [OFFICIAL_LEARNO_FAMILY_ANNOUNCEMENT];
   });
 
   // User message form state
@@ -443,9 +472,17 @@ export const CommentsPage: React.FC = () => {
     // If filter is explicitly 'announcements': show announcements by Learno family
     if (selectedFilter === 'announcements') {
       if (item.channel !== 'admin') return false;
+    } else if (activeChannel === 'admin') {
+      // Admin channel: show admin announcements
+      if (item.channel !== 'admin') return false;
     } else {
-      // Otherwise match active channel
-      if (item.channel !== activeChannel) return false;
+      // User channel:
+      if (selectedFilter === 'accepted') {
+        if (!item.isAccepted || item.channel !== 'user') return false;
+      } else if (selectedFilter === 'experience' || selectedFilter === 'problem') {
+        if (item.category !== selectedFilter || item.channel !== 'user') return false;
+      }
+      // When selectedFilter === 'all': show user comments AND announcements by Learno family
     }
 
     const matchesSearch =
@@ -455,9 +492,7 @@ export const CommentsPage: React.FC = () => {
 
     if (!matchesSearch) return false;
 
-    if (selectedFilter === 'all' || selectedFilter === 'announcements') return true;
-    if (selectedFilter === 'accepted') return item.isAccepted;
-    return item.category === selectedFilter;
+    return true;
   });
 
   const userCount = comments.filter((c) => c.channel === 'user').length;
@@ -841,7 +876,7 @@ export const CommentsPage: React.FC = () => {
                 : 'border-white/10 bg-[#0A0D14] text-neutral-400 hover:text-white'
             }`}
           >
-            All ({userCount})
+            All ({comments.length})
           </button>
 
           {activeChannel === 'user' && (
@@ -867,7 +902,7 @@ export const CommentsPage: React.FC = () => {
                     : 'border-white/10 bg-[#0A0D14] text-neutral-400 hover:text-amber-300'
                 }`}
               >
-                📢 Announcement by Learno family
+                📢 Announcement by Learno family ({adminCount})
               </button>
 
               <button
