@@ -438,10 +438,16 @@ export const CommentsPage: React.FC = () => {
     }
   };
 
-  // Filter comments for current channel
-  const channelComments = comments.filter((c) => c.channel === activeChannel);
+  // Filter comments for current channel or Learno Family announcements
+  const filteredComments = comments.filter((item) => {
+    // If filter is explicitly 'announcements': show announcements by Learno family
+    if (selectedFilter === 'announcements') {
+      if (item.channel !== 'admin') return false;
+    } else {
+      // Otherwise match active channel
+      if (item.channel !== activeChannel) return false;
+    }
 
-  const filteredComments = channelComments.filter((item) => {
     const matchesSearch =
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -449,7 +455,7 @@ export const CommentsPage: React.FC = () => {
 
     if (!matchesSearch) return false;
 
-    if (selectedFilter === 'all') return true;
+    if (selectedFilter === 'all' || selectedFilter === 'announcements') return true;
     if (selectedFilter === 'accepted') return item.isAccepted;
     return item.category === selectedFilter;
   });
@@ -835,7 +841,7 @@ export const CommentsPage: React.FC = () => {
                 : 'border-white/10 bg-[#0A0D14] text-neutral-400 hover:text-white'
             }`}
           >
-            All ({channelComments.length})
+            All ({userCount})
           </button>
 
           {activeChannel === 'user' && (
@@ -850,6 +856,18 @@ export const CommentsPage: React.FC = () => {
                 }`}
               >
                 ✓ Accepted by Admin
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedFilter('announcements')}
+                className={`px-3 py-1.5 rounded-lg border transition-all whitespace-nowrap ${
+                  selectedFilter === 'announcements'
+                    ? 'bg-amber-500/20 border-amber-500 text-amber-300 font-bold shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+                    : 'border-white/10 bg-[#0A0D14] text-neutral-400 hover:text-amber-300'
+                }`}
+              >
+                📢 Announcement by Learno family
               </button>
 
               <button
@@ -898,10 +916,16 @@ export const CommentsPage: React.FC = () => {
           <div className="bg-[#0A0D14]/90 border border-white/10 rounded-2xl p-10 text-center font-mono">
             <MessageSquare className="w-8 h-8 text-neutral-500 mx-auto mb-2 opacity-60" />
             <h3 className="text-base font-bold text-white">
-              {activeChannel === 'user' ? 'No User Messages Yet' : 'No Admin Announcements Yet'}
+              {selectedFilter === 'announcements'
+                ? 'No Announcements Yet'
+                : activeChannel === 'user'
+                ? 'No User Messages Yet'
+                : 'No Admin Announcements Yet'}
             </h3>
             <p className="text-xs text-neutral-400 mt-1">
-              {activeChannel === 'user'
+              {selectedFilter === 'announcements'
+                ? 'No official announcements have been published by the Learno family yet.'
+                : activeChannel === 'user'
                 ? 'Be the first student to share your genuine experience or report a problem above.'
                 : 'No official announcements have been published by the administrator yet.'}
             </p>
@@ -964,21 +988,21 @@ export const CommentsPage: React.FC = () => {
                   {/* Category Pill */}
                   <span
                     className={`px-2.5 py-1 rounded-md font-bold uppercase tracking-wider border ${
-                      item.category === 'experience'
+                      item.channel === 'admin' || item.category === 'suggestion'
+                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                        : item.category === 'experience'
                         ? 'bg-[#00FF66]/10 text-[#00FF66] border-[#00FF66]/30'
                         : item.category === 'problem'
                         ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                        : item.category === 'suggestion'
-                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
                         : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
                     }`}
                   >
-                    {item.category === 'experience'
+                    {item.channel === 'admin' || item.category === 'suggestion'
+                      ? '📢 ANNOUNCEMENT BY LEARNO FAMILY'
+                      : item.category === 'experience'
                       ? '✨ EXPERIENCE'
                       : item.category === 'problem'
                       ? '⚠️ PROBLEM REPORT'
-                      : item.category === 'suggestion'
-                      ? '📢 ANNOUNCEMENT'
                       : '❓ QUESTION'}
                   </span>
 
@@ -1082,9 +1106,9 @@ export const CommentsPage: React.FC = () => {
                   </div>
                 ) : (
                   /* Admin channel card tag */
-                  <div className="flex items-center gap-1.5 text-amber-400 text-[11px]">
+                  <div className="flex items-center gap-1.5 text-amber-400 text-[11px] font-bold">
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Official Broadcast by Platform Admin</span>
+                    <span>📢 Announcement by Learno family</span>
                   </div>
                 )}
 
