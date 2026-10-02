@@ -6,137 +6,80 @@ import {
   Send,
   Star,
   CheckCircle2,
-  AlertTriangle,
-  HelpCircle,
-  Sparkles,
   Shield,
   ShieldCheck,
   ThumbsUp,
   Search,
-  Filter,
   Lock,
-  Unlock,
-  Radio,
   Clock,
-  Pin,
+  Calendar,
   Trash2,
+  Sparkles,
+  AlertTriangle,
+  HelpCircle,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'learno_community_comments';
-const ADMIN_MODE_KEY = 'learno_admin_mode_active';
 
-const INITIAL_COMMENTS: CommentItem[] = [
-  {
-    id: 'admin_broadcast_01',
-    channel: 'admin',
-    authorName: 'Shivansh Giri',
-    authorEmail: 'shivanshgiri.official@gmail.com',
-    authorAvatar: '👨‍💻',
-    authorClass: 'Admin Rig',
-    isAdmin: true,
-    category: 'suggestion',
-    title: '📢 Official Welcome to Learno Community & Comments Hub',
-    content:
-      'Welcome everyone! This is the official Learno Community space. You can post your experiences, revision milestones, study routines, and report any problems or bugs on the platform. All student reports are reviewed and verified here. Keep practicing and aim for the 200 Tests trophy!',
-    timestamp: 'Just now',
-    likes: 24,
-    isAccepted: true,
-    acceptedAt: 'Verified by Admin',
-    adminNote: 'Founder & Platform Director',
-  },
-  {
-    id: 'user_comment_01',
-    channel: 'user',
-    authorName: 'Aarav Sharma',
-    authorEmail: 'aarav.sharma@gmail.com',
-    authorAvatar: '🚀',
-    authorClass: 'Class 8',
-    isAdmin: false,
-    category: 'experience',
-    title: '20 unique questions per test are phenomenal!',
-    content:
-      'I just practiced Mathematics Chapter 1 and Science Chapter 2. Every single question in the 20-problem set was completely distinct and realistic with step-by-step solutions. This helped me clear my doubt in Linear Equations!',
-    rating: 5,
-    timestamp: '2 hours ago',
-    likes: 18,
-    isAccepted: true,
-    acceptedAt: 'Verified by Admin',
-    adminNote: 'Thank you Aarav! The new question engine ensures zero repetition.',
-  },
-  {
-    id: 'user_comment_02',
-    channel: 'user',
-    authorName: 'Priya Patel',
-    authorEmail: 'priya.patel@gmail.com',
-    authorAvatar: '👩‍🎓',
-    authorClass: 'Class 7',
-    isAdmin: false,
-    category: 'problem',
-    title: 'Report: Suggestion for Hindi Voice Input on mobile',
-    content:
-      'I was trying to use the AI Tutor microphone in Hindi mode while studying Sanskrit and Hindi grammar. Please ensure the voice recognition picks up Hindi accents smoothly!',
-    timestamp: '5 hours ago',
-    likes: 9,
-    isAccepted: true,
-    acceptedAt: 'Verified by Admin',
-    adminNote: 'Resolved in today’s update! Hindi speech recognition (hi-IN) and Jarvis mode are now active.',
-  },
-  {
-    id: 'user_comment_03',
-    channel: 'user',
-    authorName: 'Kavya Verma',
-    authorEmail: 'kavya.v@gmail.com',
-    authorAvatar: '📚',
-    authorClass: 'Class 9',
-    isAdmin: false,
-    category: 'experience',
-    title: 'Love the Light and Dark Mode option in Settings',
-    content:
-      'The Obsidian Cyber dark mode is great for nighttime revision, and the clean Light Studio mode is super clear for bright classrooms during daytime study. Great work team!',
-    rating: 5,
-    timestamp: '1 day ago',
-    likes: 14,
-    isAccepted: false,
-  },
-];
+// Helper to format date and time in Indian Standard Format
+const getCurrentDate = (): string => {
+  return new Date().toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }); // e.g. "02 Oct 2026"
+};
+
+const getCurrentTime = (): string => {
+  return new Date().toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  }); // e.g. "09:05 PM"
+};
 
 export const CommentsPage: React.FC = () => {
   const { user } = useAuth();
 
-  // Mode: 'user' (Community Board where all users can post) or 'admin' (Official Admin Broadcasts)
+  // Mode: 'user' (Community Board) or 'admin' (Admin Announcements)
   const [activeChannel, setActiveChannel] = useState<CommentChannel>('user');
 
-  // Filter Category: 'all' | 'accepted' | 'experience' | 'problem' | 'question'
+  // Filter Category: 'all' | 'accepted' | 'experience' | 'problem'
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Admin Mode detection: Auto-detect if user is Shivansh Giri or admin email, or manual toggle
-  const isDefaultAdminUser =
-    user.email === 'shivanshgiri.official@gmail.com' ||
-    user.name.toLowerCase().includes('shivansh') ||
+  // Strict Admin check: Only Shivansh Giri is authorized as Administrator
+  const isRealAdmin =
+    user.email?.toLowerCase() === 'shivanshgiri.official@gmail.com' ||
+    user.name?.toLowerCase().includes('shivansh') ||
     (user as any).role === 'admin';
 
-  const [isAdminMode, setIsAdminMode] = useState<boolean>(() => {
-    const saved = localStorage.getItem(ADMIN_MODE_KEY);
-    if (saved !== null) return saved === 'true';
-    return isDefaultAdminUser;
-  });
-
-  // Comments state
+  // Load genuine messages only (clean out any old demo/mock comments)
   const [comments, setComments] = useState<CommentItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          // Filter out previous fake mock messages
+          return parsed.filter(
+            (c: any) =>
+              c &&
+              c.id &&
+              !c.id.startsWith('admin_broadcast_01') &&
+              !c.id.startsWith('user_comment_01') &&
+              !c.id.startsWith('user_comment_02') &&
+              !c.id.startsWith('user_comment_03')
+          );
+        }
       }
     } catch {
-      // ignore
+      // ignore parse error
     }
-    return INITIAL_COMMENTS;
+    return [];
   });
 
-  // New Comment Form State (User Mode)
+  // User message form state
   const [newCategory, setNewCategory] = useState<CommentCategory>('experience');
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
@@ -144,32 +87,29 @@ export const CommentsPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  // Admin Response modal / inline state
+  // Admin announcement form state (Admin only)
+  const [adminTitle, setAdminTitle] = useState('');
+  const [adminContent, setAdminContent] = useState('');
   const [adminNotePromptId, setAdminNotePromptId] = useState<string | null>(null);
   const [adminNoteInput, setAdminNoteInput] = useState('');
 
-  // Save comments to localStorage
+  // Persist genuine comments to localStorage
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
     } catch {
-      // ignore
+      // ignore storage errors
     }
   }, [comments]);
 
-  // Persist admin mode toggle
-  const toggleAdminMode = () => {
-    const next = !isAdminMode;
-    setIsAdminMode(next);
-    localStorage.setItem(ADMIN_MODE_KEY, String(next));
-  };
-
-  // Submit new user message
+  // Submit new user comment
   const handleUserSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim() || !newContent.trim()) return;
 
     setIsSubmitting(true);
+    const dateStr = getCurrentDate();
+    const timeStr = getCurrentTime();
 
     const newComment: CommentItem = {
       id: `comment_${Date.now()}`,
@@ -178,13 +118,15 @@ export const CommentsPage: React.FC = () => {
       authorEmail: user.email || 'student@learno.edu',
       authorAvatar: user.avatar || '👨‍🎓',
       authorClass: user.class || 'Class 8',
-      isAdmin: false,
+      isAdmin: isRealAdmin,
       category: newCategory,
       title: newTitle.trim(),
       content: newContent.trim(),
       rating: newCategory === 'experience' ? newRating : undefined,
-      timestamp: 'Just now',
-      likes: 1,
+      date: dateStr,
+      time: timeStr,
+      timestamp: `${dateStr} at ${timeStr}`,
+      likes: 0,
       isAccepted: false,
     };
 
@@ -196,39 +138,48 @@ export const CommentsPage: React.FC = () => {
     setTimeout(() => setSubmitSuccess(false), 3000);
   };
 
-  // Submit new Admin Broadcast (Admin Mode only)
+  // Submit new Admin Announcement (Strictly Administrator only)
   const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAdminMode || !newTitle.trim() || !newContent.trim()) return;
+    if (!isRealAdmin) {
+      alert('Access Denied: Only the Administrator (Shivansh Giri) can publish announcements.');
+      return;
+    }
+    if (!adminTitle.trim() || !adminContent.trim()) return;
 
-    const adminBroadcast: CommentItem = {
-      id: `admin_broadcast_${Date.now()}`,
+    const dateStr = getCurrentDate();
+    const timeStr = getCurrentTime();
+
+    const adminAnnouncement: CommentItem = {
+      id: `admin_announcement_${Date.now()}`,
       channel: 'admin',
-      authorName: user.name || 'Shivansh Giri (Admin)',
-      authorEmail: user.email || 'shivanshgiri.official@gmail.com',
+      authorName: 'Shivansh Giri',
+      authorEmail: 'shivanshgiri.official@gmail.com',
       authorAvatar: '👨‍💻',
-      authorClass: 'Founder & Admin',
+      authorClass: 'Platform Administrator',
       isAdmin: true,
       category: 'suggestion',
-      title: `📢 ${newTitle.trim()}`,
-      content: newContent.trim(),
-      timestamp: 'Just now',
-      likes: 1,
+      title: adminTitle.trim(),
+      content: adminContent.trim(),
+      date: dateStr,
+      time: timeStr,
+      timestamp: `${dateStr} at ${timeStr}`,
+      likes: 0,
       isAccepted: true,
-      acceptedAt: 'Official Admin Broadcast',
-      adminNote: 'Published by Learno Administration',
+      acceptedAt: `Verified on ${dateStr}`,
+      adminNote: 'Official Learno Platform Announcement',
     };
 
-    setComments((prev) => [adminBroadcast, ...prev]);
-    setNewTitle('');
-    setNewContent('');
+    setComments((prev) => [adminAnnouncement, ...prev]);
+    setAdminTitle('');
+    setAdminContent('');
     setSubmitSuccess(true);
     setTimeout(() => setSubmitSuccess(false), 3000);
   };
 
-  // Toggle Accept / Verified status on a comment (Admin only)
+  // Toggle Accept status on comment (Only Admin can perform this)
   const handleToggleAccept = (id: string) => {
-    if (!isAdminMode) {
+    if (!isRealAdmin) {
       alert('Permission Denied: Only Admin (Shivansh Giri) can accept your message.');
       return;
     }
@@ -237,11 +188,12 @@ export const CommentsPage: React.FC = () => {
       prev.map((c) => {
         if (c.id === id) {
           const nextAccepted = !c.isAccepted;
+          const dateStr = getCurrentDate();
           return {
             ...c,
             isAccepted: nextAccepted,
-            acceptedAt: nextAccepted ? new Date().toLocaleDateString() : undefined,
-            adminNote: nextAccepted ? c.adminNote || 'Verified and approved by Admin.' : undefined,
+            acceptedAt: nextAccepted ? `Verified by Admin on ${dateStr}` : undefined,
+            adminNote: nextAccepted ? c.adminNote || 'Verified and approved by Administrator.' : undefined,
           };
         }
         return c;
@@ -249,9 +201,9 @@ export const CommentsPage: React.FC = () => {
     );
   };
 
-  // Add or edit Admin Note on an accepted message
+  // Save Admin Note
   const handleSaveAdminNote = (id: string) => {
-    if (!isAdminMode) return;
+    if (!isRealAdmin) return;
     setComments((prev) =>
       prev.map((c) => {
         if (c.id === id) {
@@ -267,7 +219,7 @@ export const CommentsPage: React.FC = () => {
     setAdminNoteInput('');
   };
 
-  // Like / Upvote comment
+  // Like comment
   const handleLike = (id: string) => {
     setComments((prev) =>
       prev.map((c) => {
@@ -286,216 +238,169 @@ export const CommentsPage: React.FC = () => {
 
   // Delete comment (Admin only)
   const handleDelete = (id: string) => {
-    if (!isAdminMode) return;
-    if (confirm('Are you sure you want to remove this message?')) {
+    if (!isRealAdmin) return;
+    if (window.confirm('Delete this message permanently?')) {
       setComments((prev) => prev.filter((c) => c.id !== id));
     }
   };
 
-  // Filtered comments based on channel and user filters
-  const filteredComments = comments.filter((c) => {
-    // Channel check: 'user' or 'admin'
-    if (c.channel !== activeChannel) return false;
+  // Filter comments for current channel
+  const channelComments = comments.filter((c) => c.channel === activeChannel);
 
-    // Category / Accepted filter
-    if (selectedFilter === 'accepted' && !c.isAccepted) return false;
-    if (selectedFilter === 'experience' && c.category !== 'experience') return false;
-    if (selectedFilter === 'problem' && c.category !== 'problem') return false;
-    if (selectedFilter === 'question' && c.category !== 'question') return false;
+  const filteredComments = channelComments.filter((item) => {
+    // Search query filter
+    const matchesSearch =
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.authorName.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Search query check
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchTitle = c.title.toLowerCase().includes(q);
-      const matchContent = c.content.toLowerCase().includes(q);
-      const matchAuthor = c.authorName.toLowerCase().includes(q);
-      return matchTitle || matchContent || matchAuthor;
-    }
+    if (!matchesSearch) return false;
 
-    return true;
+    // Category filter
+    if (selectedFilter === 'all') return true;
+    if (selectedFilter === 'accepted') return item.isAccepted;
+    return item.category === selectedFilter;
   });
 
-  const acceptedCount = comments.filter((c) => c.channel === 'user' && c.isAccepted).length;
-  const userCommentsCount = comments.filter((c) => c.channel === 'user').length;
-  const adminBroadcastsCount = comments.filter((c) => c.channel === 'admin').length;
+  const userCount = comments.filter((c) => c.channel === 'user').length;
+  const adminCount = comments.filter((c) => c.channel === 'admin').length;
 
   return (
-    <div className="space-y-6 py-4 max-w-6xl mx-auto font-sans">
-      {/* Top Header Card */}
-      <div className="bg-[#0A0D14]/90 border border-white/10 rounded-2xl p-6 sm:p-8 shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#00FF66] font-bold">
-              COMMUNITY TELEMETRY & FEEDBACK
-            </span>
-            <span className="font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-neutral-300 text-[10px] font-bold">
-              {activeChannel === 'user' ? `${userCommentsCount} User Messages` : `${adminBroadcastsCount} Broadcasts`}
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-display font-black text-white uppercase tracking-wide">
-            Student Comments & Experience Hub
-          </h1>
-          <p className="text-xs sm:text-sm text-neutral-400 max-w-2xl leading-relaxed">
-            Share your exam preparation stories, rate your experience, and report bugs or website issues.
-            Every message is publicly visible to all students, and verified by the Administration.
-          </p>
-        </div>
-
-        {/* Admin Access Toggle Pill */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 font-mono text-xs w-full md:w-auto">
-          <div
-            className={`px-3.5 py-2 rounded-xl border flex items-center justify-between gap-2.5 transition-all ${
-              isAdminMode
-                ? 'bg-amber-500/10 border-amber-500/40 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
-                : 'bg-white/5 border-white/10 text-neutral-400'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              {isAdminMode ? (
-                <ShieldCheck className="w-4 h-4 text-amber-400 flex-shrink-0" />
-              ) : (
-                <Shield className="w-4 h-4 text-neutral-500 flex-shrink-0" />
-              )}
-              <span className="text-[11px] font-bold uppercase tracking-wider">
-                {isAdminMode ? 'ADMIN ACTIVE (SHIVANSH)' : 'STUDENT VIEW'}
+    <div className="space-y-6 py-4 max-w-5xl mx-auto font-sans">
+      {/* UNIFIED CLEAN HEADER */}
+      <div className="bg-[#0A0D14]/90 border border-white/10 rounded-2xl p-6 sm:p-7 shadow-card">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#00FF66] font-bold">
+                COMMUNITY HUB
+              </span>
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-white/5 border border-white/10 text-neutral-400">
+                {isRealAdmin ? '🛡️ Logged in as Administrator' : '👤 Student Mode'}
               </span>
             </div>
+            <h1 className="text-2xl sm:text-3xl font-display font-black text-white uppercase tracking-wide">
+              Learno Messages & Announcements
+            </h1>
+            <p className="text-xs sm:text-sm text-neutral-400 mt-1 max-w-2xl leading-relaxed">
+              Share real experiences, report problems, and read official updates from the administrator.
+            </p>
+          </div>
+
+          {/* TWO MAIN MODES: USER MESSAGES vs ADMIN ANNOUNCEMENTS */}
+          <div className="flex items-center gap-2 bg-[#050505] p-1.5 rounded-xl border border-white/10 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveChannel('user');
+                setSelectedFilter('all');
+              }}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-mono text-xs font-bold transition-all ${
+                activeChannel === 'user'
+                  ? 'bg-[#00FF66] text-black shadow-[0_0_12px_rgba(0,255,102,0.3)]'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>User Messages</span>
+              <span
+                className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                  activeChannel === 'user' ? 'bg-black text-[#00FF66]' : 'bg-white/10 text-neutral-400'
+                }`}
+              >
+                {userCount}
+              </span>
+            </button>
 
             <button
               type="button"
-              onClick={toggleAdminMode}
-              className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${
-                isAdminMode
-                  ? 'bg-amber-400 text-black hover:bg-amber-300 shadow-sm'
-                  : 'bg-white/10 text-white hover:bg-white/20'
+              onClick={() => {
+                setActiveChannel('admin');
+                setSelectedFilter('all');
+              }}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-mono text-xs font-bold transition-all ${
+                activeChannel === 'admin'
+                  ? 'bg-amber-400 text-black shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                  : 'text-neutral-400 hover:text-white'
               }`}
-              title="Toggle between Administrator rights and Student view"
             >
-              {isAdminMode ? '[ SWITCH TO STUDENT ]' : '[ ACTIVATE ADMIN ]'}
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Admin Messages</span>
+              <span
+                className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                  activeChannel === 'admin' ? 'bg-black text-amber-400' : 'bg-white/10 text-neutral-400'
+                }`}
+              >
+                {adminCount}
+              </span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Channel Switcher Strip: USER MESSAGES vs ADMIN MESSAGES */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-2 bg-[#0A0D14]/90 border border-white/10 rounded-2xl shadow-sm font-mono text-xs">
-        <div className="grid grid-cols-2 gap-2 w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={() => setActiveChannel('user')}
-            className={`px-4 py-2.5 rounded-xl font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-              activeChannel === 'user'
-                ? 'bg-[#00FF66] text-black shadow-[0_0_15px_rgba(0,255,102,0.3)]'
-                : 'text-neutral-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            <span>USER MESSAGES</span>
-            <span
-              className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                activeChannel === 'user' ? 'bg-black text-[#00FF66]' : 'bg-white/10 text-neutral-300'
-              }`}
-            >
-              {userCommentsCount}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveChannel('admin')}
-            className={`px-4 py-2.5 rounded-xl font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-              activeChannel === 'admin'
-                ? 'bg-amber-400 text-black shadow-[0_0_15px_rgba(245,158,11,0.4)]'
-                : 'text-neutral-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <ShieldCheck className="w-4 h-4" />
-            <span>ADMIN MESSAGES</span>
-            <span
-              className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                activeChannel === 'admin' ? 'bg-black text-amber-400' : 'bg-white/10 text-neutral-300'
-              }`}
-            >
-              {adminBroadcastsCount}
-            </span>
-          </button>
-        </div>
-
-        <div className="text-[11px] text-neutral-400 px-3 hidden md:block">
-          {activeChannel === 'user'
-            ? '👥 All registered students can post experiences and report bugs'
-            : '🛡️ Official verified broadcasts posted strictly by Administration'}
-        </div>
-      </div>
-
-      {/* CHANNEL 1: USER MESSAGES COMPOSING FORM */}
+      {/* MODE 1: USER MESSAGES COMPOSING FORM (Open to all students & users) */}
       {activeChannel === 'user' && (
-        <div className="bg-[#0A0D14]/90 border border-white/10 rounded-2xl p-6 shadow-card">
+        <div className="bg-[#0A0D14]/90 border border-white/10 rounded-2xl p-5 sm:p-6 shadow-card">
           <div className="mb-4 pb-3 border-b border-white/10 flex items-center justify-between">
             <div>
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#00FF66] font-bold">
-                POST YOUR TELEMETRY
+                POST USER MESSAGE
               </span>
-              <h3 className="text-base font-display font-bold text-white mt-0.5">
-                Send Your Experience or Problem Report
-              </h3>
+              <h2 className="text-base font-display font-bold text-white mt-0.5">
+                Share Your Experience or Problem
+              </h2>
             </div>
-            <div className="text-[11px] font-mono text-neutral-400">
-              Posting as: <strong className="text-white">{user.name}</strong> ({user.class})
-            </div>
+            {submitSuccess && (
+              <span className="font-mono text-xs text-[#00FF66] flex items-center gap-1 font-bold animate-in fade-in">
+                <CheckCircle2 className="w-4 h-4" /> Message published!
+              </span>
+            )}
           </div>
 
-          {submitSuccess && (
-            <div className="mb-4 p-3 bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66] text-xs font-mono font-bold rounded-xl flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>YOUR MESSAGE HAS BEEN PUBLISHED SUCCESSFULLY TO THE COMMUNITY FEED!</span>
-            </div>
-          )}
-
-          <form onSubmit={handleUserSubmit} className="space-y-4 font-mono text-xs">
+          <form onSubmit={handleUserSubmit} className="space-y-4">
             {/* Category selection */}
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
-                Message Category
+                Select Message Category
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-xs">
                 <button
                   type="button"
                   onClick={() => setNewCategory('experience')}
-                  className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  className={`px-3 py-2 rounded-xl border flex items-center justify-center gap-2 transition-all ${
                     newCategory === 'experience'
-                      ? 'bg-[#00FF66]/15 border-[#00FF66] text-[#00FF66]'
+                      ? 'bg-[#00FF66]/20 border-[#00FF66] text-[#00FF66] font-bold'
                       : 'border-white/10 bg-[#050505] text-neutral-400 hover:text-white'
                   }`}
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>✨ EXPERIENCE / REVIEW</span>
+                  <span>Experience</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setNewCategory('problem')}
-                  className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  className={`px-3 py-2 rounded-xl border flex items-center justify-center gap-2 transition-all ${
                     newCategory === 'problem'
-                      ? 'bg-rose-500/15 border-rose-500 text-rose-400'
+                      ? 'bg-rose-500/20 border-rose-500 text-rose-400 font-bold'
                       : 'border-white/10 bg-[#050505] text-neutral-400 hover:text-white'
                   }`}
                 >
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>⚠️ PROBLEM / BUG REPORT</span>
+                  <span>Problem / Bug</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setNewCategory('question')}
-                  className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  className={`px-3 py-2 rounded-xl border flex items-center justify-center gap-2 transition-all col-span-2 sm:col-span-1 ${
                     newCategory === 'question'
-                      ? 'bg-blue-500/15 border-blue-500 text-blue-400'
+                      ? 'bg-blue-500/20 border-blue-500 text-blue-400 font-bold'
                       : 'border-white/10 bg-[#050505] text-neutral-400 hover:text-white'
                   }`}
                 >
                   <HelpCircle className="w-3.5 h-3.5" />
-                  <span>❓ QUESTION / HELP</span>
+                  <span>Question</span>
                 </button>
               </div>
             </div>
@@ -504,9 +409,9 @@ export const CommentsPage: React.FC = () => {
             {newCategory === 'experience' && (
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
-                  Overall Platform Rating
+                  Rate Your Experience
                 </label>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
@@ -521,7 +426,9 @@ export const CommentsPage: React.FC = () => {
                       />
                     </button>
                   ))}
-                  <span className="text-neutral-400 text-xs pl-2 font-bold">{newRating} / 5 Stars</span>
+                  <span className="text-neutral-400 text-xs pl-2 font-bold font-mono">
+                    {newRating} / 5 Stars
+                  </span>
                 </div>
               </div>
             )}
@@ -529,14 +436,14 @@ export const CommentsPage: React.FC = () => {
             {/* Title */}
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
-                Headline / Subject
+                Headline / Topic
               </label>
               <input
                 type="text"
                 required
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="e.g., Loved the new Science questions! or Found an issue on mobile screen..."
+                placeholder="e.g., Mathematics chapter tests are very helpful! or Mic voice input doubt..."
                 className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-white/10 bg-[#050505] text-white focus:border-[#00FF66] outline-none transition-all"
               />
             </div>
@@ -544,134 +451,147 @@ export const CommentsPage: React.FC = () => {
             {/* Message Content */}
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
-                Detailed Feedback / Problem Description
+                Message Description
               </label>
               <textarea
                 required
                 rows={3}
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
-                placeholder="Describe your learning experience, test feedback, or the exact steps to reproduce any issue you encountered..."
+                placeholder="Write your study experience, test feedback, or the problem you faced in detail..."
                 className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-white/10 bg-[#050505] text-white focus:border-[#00FF66] outline-none transition-all resize-y"
               />
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <span className="text-[10px] text-neutral-500">
-                Notice: All submitted messages are visible to the community.
+              <span className="text-[10px] text-neutral-500 font-mono">
+                Posting as {user.name} ({user.class})
               </span>
               <button
                 type="submit"
                 disabled={isSubmitting || !newTitle.trim() || !newContent.trim()}
-                className="px-6 py-2.5 bg-[#00FF66] hover:bg-[#00FF66]/90 disabled:opacity-40 text-black rounded-xl text-xs font-bold transition-all shadow-[0_0_15px_rgba(0,255,102,0.3)] flex items-center gap-2"
+                className="px-5 py-2.5 bg-[#00FF66] hover:bg-[#00FF66]/90 disabled:opacity-40 text-black rounded-xl text-xs font-bold transition-all shadow-[0_0_15px_rgba(0,255,102,0.3)] flex items-center gap-2 font-mono"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>PUBLISH MESSAGE</span>
+                <span>SEND MESSAGE</span>
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* CHANNEL 2: ADMIN MESSAGES COMPOSING FORM (ADMIN ONLY) */}
+      {/* MODE 2: ADMIN ANNOUNCEMENTS CHANNEL */}
       {activeChannel === 'admin' && (
-        <div className="bg-[#0A0D14]/90 border border-amber-500/30 rounded-2xl p-6 shadow-card">
-          <div className="mb-4 pb-3 border-b border-white/10 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
-                <ShieldCheck className="w-5 h-5" />
+        <>
+          {/* If the current user IS the genuine Administrator: Show announcement composer */}
+          {isRealAdmin ? (
+            <div className="bg-[#0A0D14]/90 border border-amber-500/40 rounded-2xl p-5 sm:p-6 shadow-card">
+              <div className="mb-4 pb-3 border-b border-white/10 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-400 font-bold">
+                      ADMINISTRATOR CHANNEL
+                    </span>
+                    <h2 className="text-base font-display font-bold text-white mt-0.5">
+                      Publish Official Announcement
+                    </h2>
+                  </div>
+                </div>
+                {submitSuccess && (
+                  <span className="font-mono text-xs text-amber-400 flex items-center gap-1 font-bold animate-in fade-in">
+                    <CheckCircle2 className="w-4 h-4" /> Announcement broadcasted!
+                  </span>
+                )}
               </div>
-              <div>
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-400 font-bold">
-                  ADMIN CONTROL CHANNEL
-                </span>
-                <h3 className="text-base font-display font-bold text-white mt-0.5">
-                  Publish Official Admin Announcement
-                </h3>
-              </div>
+
+              <form onSubmit={handleAdminSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                    Announcement Headline
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={adminTitle}
+                    onChange={(e) => setAdminTitle(e.target.value)}
+                    placeholder="e.g., Update: New Science Chapter Tests & Exam Schedules..."
+                    className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-white/10 bg-[#050505] text-white focus:border-amber-400 outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                    Announcement Content
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={adminContent}
+                    onChange={(e) => setAdminContent(e.target.value)}
+                    placeholder="Enter the official broadcast message for all students..."
+                    className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-white/10 bg-[#050505] text-white focus:border-amber-400 outline-none transition-all resize-y"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[10px] text-amber-400/80 font-mono">
+                    Broadcasting as Platform Administrator (Shivansh Giri)
+                  </span>
+                  <button
+                    type="submit"
+                    disabled={!adminTitle.trim() || !adminContent.trim()}
+                    className="px-6 py-2.5 bg-amber-400 hover:bg-amber-300 disabled:opacity-40 text-black rounded-xl text-xs font-bold transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center gap-2 font-mono"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>BROADCAST ANNOUNCEMENT</span>
+                  </button>
+                </div>
+              </form>
             </div>
-
-            <span className="font-mono text-xs px-2.5 py-1 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30 font-bold">
-              {isAdminMode ? 'AUTHORIZATION GRANTED' : 'RESTRICTED TO ADMIN'}
-            </span>
-          </div>
-
-          {isAdminMode ? (
-            <form onSubmit={handleAdminSubmit} className="space-y-4 font-mono text-xs">
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
-                  Announcement Title
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="e.g., Scheduled Maintenance / New Term 2 Question Bank Added..."
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-white/10 bg-[#050505] text-white focus:border-amber-400 outline-none transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
-                  Official Message Content
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={newContent}
-                  onChange={(e) => setNewContent(e.target.value)}
-                  placeholder="Enter the official administrative notice for all Learno users..."
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-white/10 bg-[#050505] text-white focus:border-amber-400 outline-none transition-all resize-y"
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[10px] text-amber-400/80 font-bold">
-                  * Only you (Admin) can send messages in this mode.
-                </span>
-                <button
-                  type="submit"
-                  disabled={!newTitle.trim() || !newContent.trim()}
-                  className="px-6 py-2.5 bg-amber-400 hover:bg-amber-300 disabled:opacity-40 text-black rounded-xl text-xs font-bold transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center gap-2"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>BROADCAST AS ADMIN</span>
-                </button>
-              </div>
-            </form>
           ) : (
-            <div className="p-4 bg-amber-500/5 rounded-xl border border-amber-500/20 text-neutral-300 font-mono text-xs flex items-start gap-3">
-              <Lock className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+            /* Non-admin students: STRICT READ-ONLY BANNER. No other user can send announcement */
+            <div className="bg-[#0A0D14]/90 border border-amber-500/20 rounded-2xl p-5 shadow-card flex items-start gap-3.5">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0 mt-0.5">
+                <Lock className="w-4 h-4" />
+              </div>
               <div className="space-y-1">
-                <span className="font-bold text-amber-400 uppercase tracking-wide block">
-                  RESTRICTED ADMIN BROADCAST CHANNEL
-                </span>
-                <p className="text-neutral-400 leading-relaxed text-[11px]">
-                  In this mode, only the website administrator (Shivansh Giri) has access to post official notices and updates.
-                  All students can read the verified administrative broadcasts below.
-                  To post your own thoughts or questions, switch to <strong>User Messages</strong> mode.
+                <h3 className="text-sm font-bold text-white uppercase tracking-wide">
+                  Official Admin Announcements Channel
+                </h3>
+                <p className="text-xs text-neutral-400 leading-relaxed">
+                  Only the Administrator (<span className="text-amber-400 font-bold">Shivansh Giri</span>) can publish announcements in this category. Students can share their experiences and report problems in the{' '}
+                  <button
+                    type="button"
+                    onClick={() => setActiveChannel('user')}
+                    className="text-[#00FF66] underline font-bold"
+                  >
+                    User Messages
+                  </button>{' '}
+                  mode.
                 </p>
               </div>
             </div>
           )}
-        </div>
+        </>
       )}
 
-      {/* FILTER & SEARCH STRIP */}
+      {/* FILTER BAR & SEARCH */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 font-mono text-xs">
-        {/* Category Filters */}
+        {/* Category Filter Pills (Only for User Messages) */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           <button
             type="button"
             onClick={() => setSelectedFilter('all')}
             className={`px-3 py-1.5 rounded-lg border transition-all whitespace-nowrap ${
               selectedFilter === 'all'
-                ? 'bg-white/15 border-white text-white font-bold'
+                ? 'bg-white/15 border-white/30 text-white font-bold'
                 : 'border-white/10 bg-[#0A0D14] text-neutral-400 hover:text-white'
             }`}
           >
-            All Messages ({comments.filter((c) => c.channel === activeChannel).length})
+            All ({channelComments.length})
           </button>
 
           {activeChannel === 'user' && (
@@ -679,14 +599,13 @@ export const CommentsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSelectedFilter('accepted')}
-                className={`px-3 py-1.5 rounded-lg border transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-lg border transition-all whitespace-nowrap ${
                   selectedFilter === 'accepted'
                     ? 'bg-[#00FF66]/20 border-[#00FF66] text-[#00FF66] font-bold'
                     : 'border-white/10 bg-[#0A0D14] text-neutral-400 hover:text-white'
                 }`}
               >
-                <CheckCircle2 className="w-3 h-3 text-[#00FF66]" />
-                <span>✓ Accepted Only ({acceptedCount})</span>
+                ✓ Accepted by Admin
               </button>
 
               <button
@@ -694,7 +613,7 @@ export const CommentsPage: React.FC = () => {
                 onClick={() => setSelectedFilter('experience')}
                 className={`px-3 py-1.5 rounded-lg border transition-all whitespace-nowrap ${
                   selectedFilter === 'experience'
-                    ? 'bg-[#00FF66]/20 border-[#00FF66] text-[#00FF66] font-bold'
+                    ? 'bg-[#00FF66]/15 border-[#00FF66]/40 text-[#00FF66] font-bold'
                     : 'border-white/10 bg-[#0A0D14] text-neutral-400 hover:text-white'
                 }`}
               >
@@ -716,27 +635,31 @@ export const CommentsPage: React.FC = () => {
           )}
         </div>
 
-        {/* Search input */}
-        <div className="relative w-full sm:w-64">
+        {/* Search Input */}
+        <div className="relative w-full sm:w-60">
           <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-neutral-500" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search comments..."
+            placeholder="Search messages..."
             className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-[#0A0D14] text-white placeholder-neutral-500 focus:border-[#00FF66] outline-none transition-all"
           />
         </div>
       </div>
 
-      {/* COMMENTS LIST / CARDS FEED */}
+      {/* FEED / LIST OF MESSAGES */}
       <div className="space-y-4">
         {filteredComments.length === 0 ? (
-          <div className="bg-[#0A0D14]/90 border border-white/10 rounded-2xl p-12 text-center font-mono">
+          <div className="bg-[#0A0D14]/90 border border-white/10 rounded-2xl p-10 text-center font-mono">
             <MessageSquare className="w-8 h-8 text-neutral-500 mx-auto mb-2 opacity-60" />
-            <h4 className="text-base font-bold text-white">No Messages Found</h4>
+            <h3 className="text-base font-bold text-white">
+              {activeChannel === 'user' ? 'No User Messages Yet' : 'No Admin Announcements Yet'}
+            </h3>
             <p className="text-xs text-neutral-400 mt-1">
-              {searchQuery ? 'No results matched your search term.' : 'Be the first student to post your experience!'}
+              {activeChannel === 'user'
+                ? 'Be the first student to share your genuine experience or report a problem above.'
+                : 'No official announcements have been published by the administrator yet.'}
             </p>
           </div>
         ) : (
@@ -745,13 +668,13 @@ export const CommentsPage: React.FC = () => {
               key={item.id}
               className={`bg-[#0A0D14]/90 border rounded-2xl p-5 sm:p-6 shadow-card transition-all ${
                 item.channel === 'admin'
-                  ? 'border-amber-500/40 bg-gradient-to-r from-amber-500/[0.03] to-transparent'
+                  ? 'border-amber-500/40 bg-gradient-to-r from-amber-500/[0.04] to-transparent'
                   : item.isAccepted
                   ? 'border-[#00FF66]/40 shadow-[0_0_20px_rgba(0,255,102,0.08)]'
                   : 'border-white/10'
               }`}
             >
-              {/* Card Header: Author info, badge, accept status */}
+              {/* Card Header: Author info, Date & Time (Both User & Admin mode) */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#050505] border border-white/10 flex items-center justify-center text-xl flex-shrink-0">
@@ -771,9 +694,23 @@ export const CommentsPage: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-mono mt-0.5">
-                      <Clock className="w-3 h-3" />
-                      <span>{item.timestamp}</span>
+
+                    {/* PROMINENT DATE & TIME DISPLAY FOR BOTH USER AND ADMIN MODE */}
+                    <div className="flex items-center gap-2 font-mono text-[11px] text-neutral-400 mt-1">
+                      <div className="flex items-center gap-1 text-[#00FF66]">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span className="font-bold text-neutral-300">Date:</span>
+                        <span>{item.date || item.timestamp}</span>
+                      </div>
+                      {item.time && (
+                        <>
+                          <span className="text-neutral-600">•</span>
+                          <div className="flex items-center gap-1 text-neutral-400">
+                            <Clock className="w-3 h-3" />
+                            <span>{item.time}</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -794,10 +731,12 @@ export const CommentsPage: React.FC = () => {
                       ? '✨ EXPERIENCE'
                       : item.category === 'problem'
                       ? '⚠️ PROBLEM REPORT'
+                      : item.category === 'suggestion'
+                      ? '📢 ANNOUNCEMENT'
                       : '❓ QUESTION'}
                   </span>
 
-                  {/* Star Rating Display */}
+                  {/* Rating */}
                   {item.rating && (
                     <div className="flex items-center gap-0.5 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold">
                       <Star className="w-3 h-3 fill-amber-400" />
@@ -815,7 +754,7 @@ export const CommentsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Message Body */}
+              {/* Message Content */}
               <div className="py-3.5 space-y-1.5">
                 <h3 className="text-sm sm:text-base font-display font-bold text-white tracking-wide">
                   {item.title}
@@ -825,7 +764,7 @@ export const CommentsPage: React.FC = () => {
                 </p>
               </div>
 
-              {/* Official Admin Note / Verification Note */}
+              {/* Admin Note if present */}
               {item.adminNote && (
                 <div className="my-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 font-mono text-xs text-amber-300 flex items-start gap-2.5">
                   <ShieldCheck className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
@@ -838,68 +777,72 @@ export const CommentsPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Card Footer: ACCEPT Option (with required text) + Upvote & Admin Controls */}
+              {/* Card Footer: ACCEPT Option with Required Text + Upvote + Delete */}
               <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-xs">
-                {/* Accept Box with Required Label */}
-                <div className="flex items-center gap-2">
-                  {item.channel === 'user' && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleAccept(item.id)}
-                        className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1.5 ${
-                          item.isAccepted
-                            ? 'bg-[#00FF66]/20 border-[#00FF66] text-[#00FF66] hover:bg-rose-500/20 hover:border-rose-500 hover:text-rose-400'
-                            : isAdminMode
-                            ? 'bg-white/10 hover:bg-[#00FF66] hover:text-black border-white/20 text-neutral-300'
-                            : 'bg-white/5 border-white/10 text-neutral-400 hover:border-white/20'
-                        }`}
-                        title={
-                          isAdminMode
-                            ? item.isAccepted
-                              ? 'Click to revoke accepted status'
-                              : 'Click to Accept this message as Admin'
-                            : 'Only Admin can accept your message'
-                        }
-                      >
-                        {item.isAccepted ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#00FF66]" />
-                        ) : (
-                          <Lock className="w-3.5 h-3.5 text-neutral-400" />
-                        )}
-                        <span>{item.isAccepted ? 'ACCEPTED' : 'ACCEPT'}</span>
-                      </button>
-
-                      {/* Required Text: "Only admin can accept your message" */}
-                      <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono">
-                        <span className="text-neutral-400">
-                          Only admin can accept your message
-                        </span>
-                        {item.isAccepted && (
-                          <span className="text-[#00FF66] font-bold">
-                            • Verified
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Add Admin Note Button for Admin */}
-                  {isAdminMode && item.channel === 'user' && item.isAccepted && (
+                {/* Accept Box with Required Notice */}
+                {item.channel === 'user' ? (
+                  <div className="flex flex-wrap items-center gap-2.5">
                     <button
                       type="button"
-                      onClick={() => {
-                        setAdminNotePromptId(item.id);
-                        setAdminNoteInput(item.adminNote || '');
-                      }}
-                      className="text-[10px] text-amber-400 hover:underline ml-2"
+                      onClick={() => handleToggleAccept(item.id)}
+                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        item.isAccepted
+                          ? 'bg-[#00FF66]/20 border-[#00FF66] text-[#00FF66] hover:bg-rose-500/20 hover:border-rose-500 hover:text-rose-400'
+                          : isRealAdmin
+                          ? 'bg-white/10 hover:bg-[#00FF66] hover:text-black border-white/20 text-neutral-300'
+                          : 'bg-white/5 border-white/10 text-neutral-400 hover:border-white/20'
+                      }`}
+                      title={
+                        isRealAdmin
+                          ? item.isAccepted
+                            ? 'Revoke accepted status'
+                            : 'Accept this student message'
+                          : 'Only admin can accept your message'
+                      }
                     >
-                      [ Edit Admin Note ]
+                      {item.isAccepted ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#00FF66]" />
+                      ) : (
+                        <Lock className="w-3.5 h-3.5 text-neutral-400" />
+                      )}
+                      <span>{item.isAccepted ? 'ACCEPTED' : 'ACCEPT'}</span>
                     </button>
-                  )}
-                </div>
 
-                {/* Right side: Likes & Delete */}
+                    {/* REQUIRED EXPLICIT TEXT ON EVERY COMMENT */}
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono">
+                      <span className="text-neutral-400 font-semibold">
+                        Only admin can accept your message
+                      </span>
+                      {item.isAccepted && (
+                        <span className="text-[#00FF66] font-bold">
+                          • Verified
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Edit Admin Note for Admin */}
+                    {isRealAdmin && item.isAccepted && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdminNotePromptId(item.id);
+                          setAdminNoteInput(item.adminNote || '');
+                        }}
+                        className="text-[10px] text-amber-400 hover:underline ml-1"
+                      >
+                        [ Edit Admin Note ]
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  /* Admin channel card tag */
+                  <div className="flex items-center gap-1.5 text-amber-400 text-[11px]">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Official Broadcast by Platform Admin</span>
+                  </div>
+                )}
+
+                {/* Right controls: Upvote & Admin Delete */}
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
@@ -914,7 +857,7 @@ export const CommentsPage: React.FC = () => {
                     <span>{item.likes}</span>
                   </button>
 
-                  {isAdminMode && (
+                  {isRealAdmin && (
                     <button
                       type="button"
                       onClick={() => handleDelete(item.id)}
@@ -927,33 +870,33 @@ export const CommentsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Inline Admin Note Prompt if opened */}
+              {/* Inline Admin Note Editor */}
               {adminNotePromptId === item.id && (
-                <div className="mt-3 p-3 bg-black/60 rounded-xl border border-amber-500/40 space-y-2 font-mono text-xs">
-                  <label className="block text-[10px] font-bold text-amber-400 uppercase">
-                    Add Official Admin Verification Note:
+                <div className="mt-3 pt-3 border-t border-white/10 font-mono text-xs">
+                  <label className="block text-[10px] uppercase tracking-wider text-amber-400 font-bold mb-1">
+                    Add or Edit Admin Verification Note:
                   </label>
-                  <input
-                    type="text"
-                    value={adminNoteInput}
-                    onChange={(e) => setAdminNoteInput(e.target.value)}
-                    placeholder="e.g., Thank you! This has been resolved in the latest update."
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-white/10 bg-[#050505] text-white outline-none focus:border-amber-400"
-                  />
-                  <div className="flex items-center gap-2 justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setAdminNotePromptId(null)}
-                      className="px-3 py-1 rounded bg-white/10 text-neutral-400 hover:text-white"
-                    >
-                      Cancel
-                    </button>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={adminNoteInput}
+                      onChange={(e) => setAdminNoteInput(e.target.value)}
+                      placeholder="e.g., Thank you! This problem has been resolved in the latest update."
+                      className="flex-1 px-3 py-1.5 bg-[#050505] border border-white/10 rounded-lg text-white focus:border-amber-400 outline-none text-xs"
+                    />
                     <button
                       type="button"
                       onClick={() => handleSaveAdminNote(item.id)}
-                      className="px-3 py-1 rounded bg-amber-400 text-black font-bold hover:bg-amber-300"
+                      className="px-3 py-1.5 bg-amber-400 text-black font-bold rounded-lg hover:bg-amber-300"
                     >
-                      Save Note
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAdminNotePromptId(null)}
+                      className="px-3 py-1.5 bg-white/10 text-neutral-400 rounded-lg hover:text-white"
+                    >
+                      Cancel
                     </button>
                   </div>
                 </div>

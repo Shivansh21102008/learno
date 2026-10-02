@@ -104,7 +104,9 @@ export interface CommentItem {
   title: string;
   content: string;
   rating?: number; // 1 to 5 stars for experience
-  timestamp: string;
+  date: string; // e.g. "02 Oct 2026"
+  time: string; // e.g. "09:05 PM"
+  timestamp: string; // Combined formatted date/time
   likes: number;
   likedByMe?: boolean;
   isAccepted: boolean; // Accepted / Verified by Admin
