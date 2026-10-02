@@ -15,6 +15,7 @@ import {
   HelpCircle,
   Bot,
   Terminal,
+  MessageSquare,
 } from 'lucide-react';
 import { LearnoLogo } from './LearnoLogo';
 
@@ -56,6 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-3.5 h-3.5" /> },
     { id: 'tests', label: 'Tests', icon: <FileCheck2 className="w-3.5 h-3.5" /> },
     { id: 'achievements', label: 'Achievements', icon: <Trophy className="w-3.5 h-3.5" /> },
+    { id: 'comments', label: 'Comments', icon: <MessageSquare className="w-3.5 h-3.5" /> },
   ];
 
   return (
@@ -65,7 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
           <div className="flex items-center justify-between h-16 min-w-0">
             {/* Logo & Desktop Navigation */}
-            <div className="flex items-center gap-3 xl:gap-8 min-w-0">
+            <div className="flex items-center gap-2 xl:gap-6 min-w-0">
               <button
                 onClick={() => setActiveTab('home')}
                 className="focus-visible:ring-2 focus-visible:ring-[#00FF66] focus:outline-none rounded-xl group text-left flex-shrink-0"
@@ -75,14 +77,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               {/* Desktop Nav Items (visible on lg and above) */}
-              <nav className="hidden lg:flex items-center space-x-1 xl:space-x-2 min-w-0">
+              <nav className="hidden lg:flex items-center space-x-1 min-w-0">
                 {navItems.map((item) => {
                   const isActive = activeTab === item.id;
                   return (
                     <button
                       key={item.id}
                       onClick={() => setActiveTab(item.id)}
-                      className={`flex items-center gap-1.5 xl:gap-2 px-3 xl:px-3.5 py-1.5 rounded-lg font-mono text-xs tracking-wider uppercase transition-all whitespace-nowrap flex-shrink-0 border ${
+                      className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-lg font-mono text-xs tracking-wider uppercase transition-all whitespace-nowrap flex-shrink-0 border ${
                         isActive
                           ? 'bg-[#00FF66]/10 text-[#00FF66] border-[#00FF66]/40 shadow-[0_0_15px_rgba(0,255,102,0.2)] font-bold'
                           : 'text-neutral-400 hover:text-white hover:bg-white/[0.04] border-transparent hover:border-white/10'
@@ -94,43 +96,29 @@ export const Navbar: React.FC<NavbarProps> = ({
                   );
                 })}
 
-                {/* Instructions Guide Button (visible on xl and above) */}
+                {/* Clean Guide Button in Nav for desktop */}
                 <button
                   onClick={onOpenInstructions}
-                  className="hidden xl:flex items-center gap-2 px-3 xl:px-3.5 py-1.5 rounded-lg font-mono text-xs tracking-wider uppercase text-neutral-400 hover:text-white hover:bg-white/[0.04] border border-transparent hover:border-white/10 transition-all whitespace-nowrap flex-shrink-0"
+                  className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs tracking-wider uppercase text-neutral-300 hover:text-white hover:bg-white/[0.05] border border-white/10 hover:border-white/20 transition-all whitespace-nowrap flex-shrink-0"
                   title="Platform Instructions & Feature Guide"
                 >
-                  <Terminal className="w-3.5 h-3.5 text-neutral-400" />
+                  <Terminal className="w-3.5 h-3.5 text-[#00FF66]" />
                   <span>Guide</span>
                 </button>
               </nav>
             </div>
 
             {/* Right actions */}
-            <div className="flex items-center gap-1.5 sm:gap-2 xl:gap-3 flex-shrink-0">
-              {/* AI Tutor Button: Glitch9 Neon Launch Button */}
-              <button
-                onClick={onToggleAiTutor}
-                className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-lg font-mono text-xs font-black uppercase tracking-wider transition-all duration-200 flex-shrink-0 ${
-                  isAiTutorOpen
-                    ? 'bg-[#00FF66] text-black shadow-[0_0_20px_rgba(0,255,102,0.6)] ring-2 ring-[#00FF66]/50'
-                    : 'bg-[#00FF66] hover:bg-[#2eff7d] text-black shadow-[0_0_15px_rgba(0,255,102,0.4)] hover:shadow-[0_0_25px_rgba(0,255,102,0.6)] active:scale-95'
-                }`}
-                title="Launch 24/7 Neural AI Tutor"
-              >
-                <Bot className="w-3.5 h-3.5 text-black stroke-[2.5]" />
-                <span className="hidden min-[420px]:inline">AI Tutor</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse flex-shrink-0" />
-              </button>
-
-              {/* Guide Icon Button for medium/tablet screens */}
+            <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
+              {/* Instructions Guide Button for mobile & tablet (always accessible) */}
               <button
                 onClick={onOpenInstructions}
-                className="hidden sm:flex xl:hidden p-1.5 sm:p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/[0.05] border border-white/10 transition-colors flex-shrink-0"
+                className="xl:hidden flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg font-mono text-xs font-bold uppercase tracking-wider text-neutral-200 hover:text-white bg-white/5 hover:bg-white/10 border border-white/15 hover:border-[#00FF66]/50 transition-all flex-shrink-0 shadow-sm"
                 title="Learno Guide & Instructions"
                 aria-label="Learno Guide & Instructions"
               >
-                <HelpCircle className="w-4 h-4 text-neutral-300" />
+                <Terminal className="w-3.5 h-3.5 text-[#00FF66] flex-shrink-0" />
+                <span className="hidden min-[420px]:inline">Guide</span>
               </button>
 
               {/* Class Switcher Pill: Glitch9 Hardware Rig Pill */}
@@ -205,6 +193,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </button>
                         <button
                           onClick={() => {
+                            setActiveTab('comments');
+                            setDropdownOpen(false);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-4 py-2 font-mono text-xs text-neutral-300 hover:text-white hover:bg-white/[0.05] transition-colors"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5 text-[#00FF66]" />
+                          Community Comments
+                        </button>
+                        <button
+                          onClick={() => {
                             onOpenInstructions();
                             setDropdownOpen(false);
                           }}
@@ -247,14 +245,14 @@ export const Navbar: React.FC<NavbarProps> = ({
       </header>
 
       {/* Mobile & Tablet Bottom Navigation: Glitch9 Cyber HUD Bar */}
-      <nav aria-label="Mobile navigation" className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#050505]/95 backdrop-blur-xl border-t border-white/10 px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex justify-around items-center shadow-2xl transition-colors">
+      <nav aria-label="Mobile navigation" className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#050505]/95 backdrop-blur-xl border-t border-white/10 px-1 sm:px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex justify-around items-center shadow-2xl transition-colors">
         {navItems.map((item) => {
           const isActive = activeTab === item.id;
           return (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-lg font-mono text-[9px] uppercase tracking-wider transition-all ${
+              className={`flex flex-col items-center justify-center py-1 px-1 sm:px-2 rounded-lg font-mono text-[8px] sm:text-[9px] uppercase tracking-wider transition-all ${
                 isActive
                   ? 'text-[#00FF66] font-bold drop-shadow-[0_0_8px_rgba(0,255,102,0.6)]'
                   : 'text-neutral-500 hover:text-neutral-300'
@@ -269,14 +267,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 {item.icon}
               </div>
-              <span className="mt-0.5">{item.label}</span>
+              <span className="mt-0.5 max-w-[50px] sm:max-w-none truncate">{item.label}</span>
             </button>
           );
         })}
         {/* Mobile Guide Shortcut */}
         <button
           onClick={onOpenInstructions}
-          className="flex flex-col items-center justify-center py-1 px-2.5 rounded-lg font-mono text-[9px] uppercase tracking-wider text-neutral-500 hover:text-neutral-300 transition-colors"
+          className="flex flex-col items-center justify-center py-1 px-1 sm:px-2 rounded-lg font-mono text-[8px] sm:text-[9px] uppercase tracking-wider text-neutral-500 hover:text-neutral-300 transition-colors"
         >
           <div className="p-1 rounded-md text-neutral-500">
             <Terminal className="w-3.5 h-3.5" />

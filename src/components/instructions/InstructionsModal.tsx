@@ -463,9 +463,9 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
 
           <button
             onClick={onClose}
-            className="px-5 p-2.5 min-h-[44px] bg-glitch-card hover:bg-glitch-surface border border-glitch-border text-text-primary rounded-xl font-bold transition-colors"
+            className="px-5 py-2.5 min-h-[44px] bg-[#00FF66] hover:bg-[#00FF66]/90 text-black rounded-xl font-mono text-xs font-black transition-all shadow-[0_0_15px_rgba(0,255,102,0.3)] active:scale-95 flex items-center gap-1.5"
           >
-            Got It, Close
+            <span>[ GOT IT, CLOSE ]</span>
           </button>
         </div>
       </div>

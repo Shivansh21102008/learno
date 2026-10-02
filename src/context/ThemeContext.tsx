@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
-export type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark';
 
 interface ThemeContextType {
   theme: Theme;
@@ -12,21 +12,44 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [theme, setThemeState] = useState<Theme>(() => {
+    try {
+      const saved = localStorage.getItem('learno_theme') as Theme;
+      if (saved === 'light' || saved === 'dark') {
+        return saved;
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+    return 'dark'; // Glitch9 cyberpunk theme is dark by default
+  });
+
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.add('dark');
-  }, []);
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    }
+    try {
+      localStorage.setItem('learno_theme', theme);
+    } catch {
+      // Ignore
+    }
+  }, [theme]);
 
   const setTheme = (newTheme: Theme) => {
-    // Keep it always dark, do not change state
+    setThemeState(newTheme);
   };
 
   const toggleTheme = () => {
-    // No-op
+    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
   return (
-    <ThemeContext.Provider value={{ theme: 'dark', resolvedTheme: 'dark', setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme: theme, setTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -87,7 +87,30 @@ export interface User {
   createdAt: string;
 }
 
-export type ActiveTab = 'home' | 'dashboard' | 'tests' | 'achievements' | 'profile';
+export type ActiveTab = 'home' | 'dashboard' | 'tests' | 'achievements' | 'profile' | 'comments';
+
+export type CommentCategory = 'experience' | 'problem' | 'question' | 'suggestion';
+export type CommentChannel = 'user' | 'admin';
+
+export interface CommentItem {
+  id: string;
+  channel: CommentChannel; // 'user' (community) or 'admin' (official announcement)
+  authorName: string;
+  authorEmail: string;
+  authorAvatar: string;
+  authorClass?: string;
+  isAdmin: boolean;
+  category: CommentCategory;
+  title: string;
+  content: string;
+  rating?: number; // 1 to 5 stars for experience
+  timestamp: string;
+  likes: number;
+  likedByMe?: boolean;
+  isAccepted: boolean; // Accepted / Verified by Admin
+  acceptedAt?: string;
+  adminNote?: string;
+}
 
 export type AIVivaMode = 'easy' | 'intermediate' | 'hard';
 

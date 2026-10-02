@@ -10,6 +10,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { TestsPage } from './pages/TestsPage';
 import { AchievementsPage } from './pages/AchievementsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { CommentsPage } from './pages/CommentsPage';
 import { TestScreen } from './components/test/TestScreen';
 import { TestResultModal } from './components/test/TestResultModal';
 import { ReviewAnswersModal } from './components/test/ReviewAnswersModal';
@@ -126,6 +127,8 @@ const MainLayout: React.FC = () => {
 
         {activeTab === 'achievements' && <AchievementsPage />}
 
+        {activeTab === 'comments' && <CommentsPage />}
+
         {activeTab === 'profile' && (
           <ProfilePage onOpenClassModal={() => setIsClassModalOpen(true)} />
         )}
@@ -166,19 +169,19 @@ const MainLayout: React.FC = () => {
         onClose={() => setIsAiTutorOpen(false)}
       />
 
-      {/* Floating Right-Edge Quick Trigger for AI Tutor Sidebar */}
+      {/* Floating Right-Edge Quick Trigger for AI Tutor (Normal & Jarvis Mode) */}
       {!isAiTutorOpen && (
         <button
           onClick={() => setIsAiTutorOpen(true)}
-          className="hidden sm:flex fixed right-0 top-1/2 -translate-y-1/2 z-30 bg-[#0A0D14] hover:bg-[#00FF66] text-white hover:text-black py-3 px-2 rounded-l-xl shadow-2xl flex-col items-center gap-2 hover:px-2.5 transition-all duration-200 border-y border-l border-white/10 hover:border-[#00FF66] group font-mono"
-          title="Open AI Copilot"
-          aria-label="Open AI Copilot"
+          className="flex fixed right-0 top-1/2 -translate-y-1/2 z-30 bg-[#0A0D14] hover:bg-[#00FF66] text-white hover:text-black py-3 px-2 rounded-l-xl shadow-2xl flex-col items-center gap-2 hover:px-2.5 transition-all duration-200 border-y border-l border-white/10 hover:border-[#00FF66] group font-mono"
+          title="Open AI Tutor (Normal & Jarvis Mode)"
+          aria-label="Open AI Tutor"
         >
           <div className="w-7 h-7 rounded-lg bg-white/5 group-hover:bg-black/10 flex items-center justify-center transition-transform">
             <Bot className="w-4 h-4 text-[#00FF66] group-hover:text-black" />
           </div>
           <span className="text-[9px] font-bold tracking-widest uppercase [writing-mode:vertical-rl] rotate-180">
-            [ COPILOT ]
+            [ AI TUTOR ]
           </span>
           <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_6px_#00FF66]" />
         </button>

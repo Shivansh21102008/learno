@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
   Bot,
@@ -10,9 +10,13 @@ import {
   Volume2,
   VolumeX,
   Mic,
+  MicOff,
   Copy,
   Check,
   RotateCcw,
+  Zap,
+  Globe,
+  Radio,
 } from 'lucide-react';
 
 interface AITutorSidebarProps {
@@ -26,6 +30,7 @@ interface ChatMessage {
   sender: 'ai' | 'user';
   text: string;
   timestamp: string;
+  isJarvis?: boolean;
 }
 
 export const AITutorSidebar: React.FC<AITutorSidebarProps> = ({
@@ -36,6 +41,12 @@ export const AITutorSidebar: React.FC<AITutorSidebarProps> = ({
   const { user } = useAuth();
   const currentClass = user?.class || 'Class 8';
 
+  // Modes: 'normal' (academic chat tutor) or 'jarvis' (continuous voice cyber assistant)
+  const [aiMode, setAiMode] = useState<'normal' | 'jarvis'>('normal');
+
+  // Languages for Voice / Mic: 'hi-IN' (Hindi) or 'en-IN' (English)
+  const [voiceLang, setVoiceLang] = useState<'hi-IN' | 'en-IN'>('hi-IN');
+
   // 'sidebar' or 'fullscreen'
   const [viewMode, setViewMode] = useState<'sidebar' | 'fullscreen'>('sidebar');
   const [inputText, setInputText] = useState(initialQuery || '');
@@ -43,9 +54,11 @@ export const AITutorSidebar: React.FC<AITutorSidebarProps> = ({
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [isJarvisContinuous, setIsJarvisContinuous] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [speechError, setSpeechError] = useState<string | null>(null);
 
-  // API Key & Model Configuration (Silently configured in background via .env or localStorage)
+  // API Key & Model Configuration
   const rawKey = (import.meta as any).env?.VITE_AI_TUTOR_API_KEY || localStorage.getItem('learno_ai_tutor_api_key') || '';
   const apiKey = typeof rawKey === 'string' ? rawKey.trim().replace(/^["']|["']$/g, '') : '';
   const rawModel = (import.meta as any).env?.VITE_AI_TUTOR_MODEL || localStorage.getItem('learno_ai_tutor_model') || 'openai/gpt-oss-120b';
@@ -61,7 +74,7 @@ export const AITutorSidebar: React.FC<AITutorSidebarProps> = ({
     {
       id: 'welcome',
       sender: 'ai',
-      text: `Hello ${user?.name || 'Student'}! 👋 I am your 24/7 **Learno AI Academic Tutor** for **${currentClass}**.\n\nYou can ask me **anything**:\n- 📐 **Mathematics**: Step-by-step problem solving & geometry proofs\n- 🔬 **Science**: Physics formulas, Biology concepts & Chemistry reactions\n- 📖 **English**: Grammar rules, active/passive voice, direct/indirect speech\n- 🌍 **Social Science**: History timelines, Civics & Geography\n- 💻 **Computer / Coding**: Python loops, HTML/CSS & algorithms\n- 🇮🇳 **Hindi & Sanskrit**: व्याकरण, सन्धि, समास व शब्दरूप\n- 🗣️ **Communication**: Fluency, public speaking & polite phrasing\n- 🎯 **Learno Platform**: How the 200 tests, term exams & AI Viva work\n\nHow can I help you excel today?`,
+      text: `Hello ${user?.name || 'Student'}! 👋 I am your 24/7 **Learno AI Academic Tutor & JARVIS Rig** for **${currentClass}**.\n\n🌐 **Bilingual Voice Active**: Speak in **Hindi (हिन्दी)** or **English** using the mic!\n\nSwitch anytime between:\n- 🤖 **NORMAL MODE**: Structured step-by-step syllabus explanations\n- ⚡ **JARVIS MODE**: Hands-free voice conversational assistant with auto-speech\n\nHow can I help you excel today?`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -82,52 +95,150 @@ export const AITutorSidebar: React.FC<AITutorSidebarProps> = ({
     }
   }, [isOpen]);
 
-  // Cleanup speech synthesis on close
+  // Cleanup speech synthesis and mic on close
   useEffect(() => {
     if (!isOpen) {
       window.speechSynthesis?.cancel();
       setIsAiSpeaking(false);
       if (recognitionRef.current) {
-        recognitionRef.current.abort();
+        try {
+          recognitionRef.current.abort();
+        } catch {
+          // ignore
+        }
         setIsListening(false);
       }
     }
   }, [isOpen]);
 
-  // Handle Speech-to-Text Input
-  const toggleListening = () => {
+  // Find appropriate TTS voice for language
+  const getPreferredVoice = useCallback((isHindi: boolean): SpeechSynthesisVoice | null => {
+    if (!('speechSynthesis' in window)) return null;
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices || voices.length === 0) return null;
+
+    if (isHindi) {
+      // Look for Hindi voice
+      const hindiVoice = voices.find(
+        (v) =>
+          v.lang.toLowerCase().startsWith('hi') ||
+          v.name.toLowerCase().includes('hindi') ||
+          v.name.toLowerCase().includes('lekha') ||
+          v.name.toLowerCase().includes('kalpana') ||
+          v.name.toLowerCase().includes('hemant')
+      );
+      if (hindiVoice) return hindiVoice;
+    }
+
+    // Default to Indian English or UK/US English voice
+    const englishVoice = voices.find(
+      (v) =>
+        v.lang.toLowerCase().startsWith('en-in') ||
+        v.lang.toLowerCase().startsWith('en-gb') ||
+        v.lang.toLowerCase().startsWith('en-us')
+    );
+    return englishVoice || voices[0] || null;
+  }, []);
+
+  // Speak AI text
+  const speakText = useCallback(
+    (text: string) => {
+      if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+
+      // Clean markdown and math symbols for smooth speech
+      const cleanText = text
+        .replace(/[*#_`$]/g, '')
+        .replace(/\[.*?\]/g, '')
+        .replace(/\\mathbf\{([^}]+)\}/g, '$1')
+        .replace(/\\xrightarrow\[.*?\]\{.*?\}/g, 'gives')
+        .replace(/\n+/g, '. ');
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+
+      // Detect if text contains Devanagari Hindi characters
+      const hasDevanagari = /[\u0900-\u097F]/.test(text);
+      const isHindi = hasDevanagari || voiceLang === 'hi-IN';
+
+      utterance.lang = isHindi ? 'hi-IN' : 'en-IN';
+      const voice = getPreferredVoice(isHindi);
+      if (voice) {
+        utterance.voice = voice;
+      }
+
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+
+      utterance.onstart = () => setIsAiSpeaking(true);
+      utterance.onend = () => {
+        setIsAiSpeaking(false);
+        // In Jarvis mode, if continuous listening is on, automatically resume listening!
+        if (aiMode === 'jarvis' && isJarvisContinuous && isOpen) {
+          setTimeout(() => {
+            startListening();
+          }, 450);
+        }
+      };
+      utterance.onerror = () => setIsAiSpeaking(false);
+
+      window.speechSynthesis.speak(utterance);
+    },
+    [isVoiceEnabled, voiceLang, getPreferredVoice, aiMode, isJarvisContinuous, isOpen]
+  );
+
+  const stopSpeaking = () => {
+    window.speechSynthesis?.cancel();
+    setIsAiSpeaking(false);
+  };
+
+  // Start speech recognition
+  const startListening = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert('Speech Recognition is not supported in this browser. Please type your question.');
+      setSpeechError('Speech Recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
       return;
     }
 
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-      return;
-    }
+    // Stop speaking if currently speaking
+    stopSpeaking();
 
     try {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+
       const recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
+      // Set to currently selected language (hi-IN for Hindi, en-IN for English)
+      recognition.lang = voiceLang;
       recognition.interimResults = false;
       recognition.continuous = false;
+      recognition.maxAlternatives = 1;
 
       recognition.onstart = () => {
         setIsListening(true);
+        setSpeechError(null);
       };
 
       recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setInputText((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        const transcript = event.results?.[0]?.[0]?.transcript;
+        if (transcript) {
+          // If in Jarvis mode, automatically send the recognized question
+          if (aiMode === 'jarvis') {
+            handleSendMessage(transcript);
+          } else {
+            setInputText((prev) => (prev ? `${prev} ${transcript}` : transcript));
+          }
+        }
         setIsListening(false);
       };
 
-      recognition.onerror = () => {
+      recognition.onerror = (event: any) => {
         setIsListening(false);
+        if (event.error !== 'no-speech') {
+          console.warn('Speech recognition event:', event.error);
+        }
       };
 
       recognition.onend = () => {
@@ -136,41 +247,38 @@ export const AITutorSidebar: React.FC<AITutorSidebarProps> = ({
 
       recognitionRef.current = recognition;
       recognition.start();
-    } catch {
+    } catch (err: any) {
+      console.warn('Speech recognition initiation error:', err);
       setIsListening(false);
     }
   };
 
-  // Speak AI text
-  const speakText = (text: string) => {
-    if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-
-    // Clean markdown for speech
-    const cleanText = text
-      .replace(/[*#_`]/g, '')
-      .replace(/\[.*?\]/g, '')
-      .replace(/\n+/g, '. ');
-
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-
-    utterance.onstart = () => setIsAiSpeaking(true);
-    utterance.onend = () => setIsAiSpeaking(false);
-    utterance.onerror = () => setIsAiSpeaking(false);
-
-    window.speechSynthesis.speak(utterance);
+  // Toggle listening
+  const toggleListening = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+    } else {
+      startListening();
+    }
   };
 
-  const stopSpeaking = () => {
-    window.speechSynthesis?.cancel();
-    setIsAiSpeaking(false);
+  // Switch voice language
+  const handleToggleLanguage = () => {
+    const nextLang = voiceLang === 'hi-IN' ? 'en-IN' : 'hi-IN';
+    setVoiceLang(nextLang);
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.abort();
+      setIsListening(false);
+    }
   };
 
-  // Knowledge base generator for any question
+  // Comprehensive Knowledge base generator supporting both Hindi and English
   const generateAiTutorResponse = (query: string): string => {
     const q = query.toLowerCase().trim();
+    const hasDevanagari = /[\u0900-\u097F]/.test(query);
 
     // 0. Quick arithmetic calculation (e.g. 4 + 4, 15 * 6)
     const arithmeticMatch = q.match(/^(\d+(?:\.\d+)?)\s*([\+\-\*\/x×÷])\s*(\d+(?:\.\d+)?)$/);
@@ -184,236 +292,137 @@ export const AITutorSidebar: React.FC<AITutorSidebarProps> = ({
       else if (op === '*' || op === 'x' || op === '×') result = num1 * num2;
       else if (op === '/' || op === '÷') result = num2 !== 0 ? num1 / num2 : 0;
 
+      if (aiMode === 'jarvis') {
+        return voiceLang === 'hi-IN' || hasDevanagari
+          ? `सर, ${num1} और ${num2} का परिणाम ${result} है। क्या कोई अन्य गणना करनी है?`
+          : `Sir, ${num1} ${op} ${num2} is equal to ${result}. Shall I compute anything else?`;
+      }
       return `**${num1} ${op} ${num2} = ${result}**\n\nNeed help with any other calculations, equations, or chapter doubts?`;
     }
 
-    // 0.1 Friendly greetings
-    if (['hi', 'hello', 'hey', 'namaste', 'good morning', 'good afternoon', 'good evening'].includes(q) || q.startsWith('hi ') || q.startsWith('hello ')) {
-      return `Hello ${user?.name || 'there'}! 👋 How can I help you with your ${currentClass} studies or doubt clearing today?`;
+    // 0.1 Friendly greetings in Hindi / English
+    if (['hi', 'hello', 'hey', 'namaste', 'नमस्ते', 'प्रणाम', 'kaise ho', 'kya haal hai'].some(g => q.includes(g))) {
+      if (voiceLang === 'hi-IN' || hasDevanagari) {
+        return `नमस्ते ${user?.name || 'विद्यार्थी'}! 🙏 मैं आपका 24/7 **Learno AI Academic Tutor** हूँ।\n\nआप मुझसे गणित, विज्ञान, हिंदी व्याकरण, संस्कृत, अंग्रेजी, सामाजिक विज्ञान या कंप्यूटर का कोई भी प्रश्न पूछ सकते हैं। आप आज क्या पढ़ना चाहते हैं?`;
+      }
+      return `Hello ${user?.name || 'there'}! 👋 I am your 24/7 **Learno AI Academic Tutor** for **${currentClass}**.\n\nYou can ask me doubts in Mathematics, Science, English, SST, Computer, or Learno platform features!`;
     }
 
-    // 1. Math Questions
-    if (q.includes('pythagor') || q.includes('triangle') || q.includes('hypotenuse')) {
-      return `### 📐 Pythagoras Theorem (Geometry & Trigonometry)
+    // 1. Photosynthesis in Hindi / English
+    if (q.includes('प्रकाश संश्लेषण') || q.includes('photosynthesis')) {
+      if (voiceLang === 'hi-IN' || hasDevanagari || q.includes('hindi')) {
+        return `### 🔬 प्रकाश संश्लेषण (Photosynthesis)
+        
+**परिभाषा**: हरे पौधे सूर्य के प्रकाश तथा पर्णहरिम (क्लोरोफिल) की उपस्थिति में कार्बन डाइऑक्साइड ($CO_2$) और जल ($H_2O$) की सहायता से ग्लूकोज (कार्बोहाइड्रेट) बनाते हैं और ऑक्सीजन गैस मुक्त करते हैं।
 
-**Statement**: In a right-angled triangle, the square of the hypotenuse is equal to the sum of the squares of the other two sides.
+#### ⚗️ रासायनिक समीकरण:
+$$\\mathbf{6CO_2 + 6H_2O \\xrightarrow[क्लोरोफिल]{सूर्य\\,का\\,प्रकाश} C_6H_{12}O_6 + 6O_2}$$
 
-$$\\mathbf{a^2 + b^2 = c^2}$$
-*(Where $c$ is the hypotenuse opposite the $90^\\circ$ angle, and $a, b$ are the adjacent sides)*
+#### 🌿 मुख्य घटक:
+1. **क्लोरोफिल**: पत्तियों के क्लोरोप्लास्ट में उपस्थित हरा वर्णक जो सौर ऊर्जा अवशोषित करता है।
+2. **कार्बन डाइऑक्साइड ($CO_2$)**: पत्तियों के सूक्ष्म छिद्रों (रंध्र / रंध्र-द्वारों) द्वारा वायुमंडल से ग्रहण की जाती है।
+3. **जल ($H_2O$)**: जड़ों द्वारा जाइलम ऊतक से अवशोषित होकर पत्तियों तक पहुँचता है।
+4. **ऑक्सीजन ($O_2$)**: उप-उत्पाद के रूप में वायुमंडल में छोड़ी जाती है, जिससे सभी जीव श्वसन करते हैं!`;
+      }
 
-#### 📝 Step-by-Step Example:
-If a right triangle has base $b = 3\\text{ cm}$ and perpendicular $a = 4\\text{ cm}$:
-1. $c^2 = 3^2 + 4^2$
-2. $c^2 = 9 + 16 = 25$
-3. $c = \\sqrt{25} = 5\\text{ cm}$
-
-#### 🌟 Real-Life Application:
-Architects and carpenters use the **3-4-5 rule** to verify perfect $90^\\circ$ square corners when laying foundations or framing walls!`;
-    }
-
-    if (q.includes('linear equation') || q.includes('solve for x') || q.includes('2x + 5')) {
-      return `### 📐 Solving Linear Equations Step-by-Step
-
-Let's solve the equation: **$2x + 5 = 15$**
-
-#### 📝 Steps:
-1. **Isolate the variable term ($2x$)**:
-   Subtract $5$ from both sides:
-   $$2x + 5 - 5 = 15 - 5$$
-   $$2x = 10$$
-2. **Solve for $x$**:
-   Divide both sides by the coefficient $2$:
-   $$x = \\frac{10}{2} = 5$$
-
-#### ✅ Verification:
-Substitute $x = 5$ back into the original equation:
-$$2(5) + 5 = 10 + 5 = 15 \\quad \\text{(LHS = RHS!)}$$
-
-**Core Rule**: Whatever operation (addition, subtraction, multiplication, division) you do to one side of an equation, you must always do to the other side!`;
-    }
-
-    // 2. Science Questions
-    if (q.includes('photosynthesis') || q.includes('plant') || q.includes('chlorophyll')) {
       return `### 🔬 Photosynthesis: The Plant Energy Engine
 
-**Definition**: Photosynthesis is the biochemical process by which green plants synthesize glucose (food) from carbon dioxide and water in the presence of sunlight and chlorophyll.
+**Definition**: Photosynthesis is the biochemical process by which green plants synthesize glucose from carbon dioxide and water using sunlight and chlorophyll.
 
 #### ⚗️ Chemical Equation:
 $$\\mathbf{6CO_2 + 6H_2O \\xrightarrow[Chlorophyll]{Sunlight} C_6H_{12}O_6 + 6O_2}$$
 
-#### 🌿 Key Ingredients & Roles:
-1. **Chlorophyll**: Green pigment located in the chloroplasts that absorbs solar photons.
-2. **Carbon Dioxide ($CO_2$)**: Absorbed from the atmosphere through microscopic leaf pores called **stomata**.
-3. **Water ($H_2O$)**: Absorbed from soil by roots through **xylem vessels**.
-4. **Byproduct ($O_2$)**: Clean oxygen is released into the atmosphere for all aerobic life!`;
+1. **Chlorophyll**: Green pigment in chloroplasts absorbing solar photons.
+2. **CO₂**: Absorbed via microscopic stomata pores.
+3. **Water**: Absorbed by roots via xylem vessels.
+4. **Oxygen**: Released into the atmosphere for aerobic respiration!`;
     }
 
-    if (q.includes('cell') || q.includes('mitochondria') || q.includes('nucleus')) {
-      return `### 🔬 Cell Biology: Plant Cells vs Animal Cells
-
-The cell is the basic structural and functional unit of life.
-
-#### 🆚 Key Differences:
-| Feature | Plant Cell | Animal Cell |
-|---|---|---|
-| **Cell Wall** | Present (made of rigid cellulose) | Absent (only flexible cell membrane) |
-| **Chloroplasts** | Present (performs photosynthesis) | Absent |
-| **Vacuole** | One large central vacuole (90% volume) | Multiple small, temporary vacuoles |
-| **Shape** | Fixed, rectangular/hexagonal | Irregular, rounded |
-
-#### ⚡ Essential Organelles:
-- **Mitochondria**: The *"Powerhouse of the Cell"* generating ATP energy.
-- **Nucleus**: The *"Brain/Control Center"* storing DNA chromatin genetic material.
-- **Ribosomes**: The cellular factories that synthesize proteins.`;
-    }
-
-    // 3. English Questions
-    if (q.includes('active') || q.includes('passive') || q.includes('voice')) {
-      return `### 📖 Active vs Passive Voice Rules
-
-#### 🔹 Active Voice:
-The subject **performs** the action.
-> *Formula*: Subject + Verb + Object  
-> *Example*: "Rohan wrote the research report."
-
-#### 🔸 Passive Voice:
-The action is **received** by the subject (emphasis on the object or action).
-> *Formula*: Object + helping verb (to be) + Past Participle ($V_3$) + by + Subject  
-> *Example*: "The research report was written by Rohan."
-
-#### 🔑 Transformation Rules:
-1. Present Simple: *writes* ➔ *is written*
-2. Past Simple: *wrote* ➔ *was written*
-3. Future Simple: *will write* ➔ *will be written*
-4. Present Continuous: *is writing* ➔ *is being written*`;
-    }
-
-    // 4. Communication Questions
-    if (q.includes('communication') || q.includes('disagree') || q.includes('prep') || q.includes('speak')) {
-      return `### 🗣️ Professional Communication: How to Disagree Constructively
-
-In academic and professional settings, disagreement should validate the other person's perspective before offering an alternative.
-
-#### 🏆 The 3-Step "Validate - Pivot - Propose" Framework:
-1. **Step 1: Validate**: Acknowledge their intention respectfully.
-   > *"I appreciate that viewpoint, and I see why that approach makes sense..."*
-2. **Step 2: Pivot**: Introduce another perspective with diplomatic transitions (avoid blunt words like 'No' or 'Wrong').
-   > *"However, looking at the data from another angle..."*
-3. **Step 3: Propose**: Suggest a concrete collaborative solution.
-   > *"What if we combine both elements to test a pilot first?"*
-
-#### 🎙️ Speaking Formula: The PREP Method:
-- **P**oint: State your main thesis clearly.
-- **R**eason: Give the rationale behind it.
-- **E**xample: Provide a tangible illustration or fact.
-- **P**oint: Reiterate your conclusion firmly.`;
-    }
-
-    // 5. Hindi & Sanskrit
-    if (q.includes('sandhi') || q.includes('सन्धि') || q.includes('समास')) {
+    // 2. Sandhi and Samas in Hindi
+    if (q.includes('sandhi') || q.includes('सन्धि') || q.includes('समास') || q.includes('samas')) {
       return `### 🇮🇳 हिन्दी व्याकरण: सन्धि और समास में अन्तर
 
 #### 1. सन्धि (वर्णों का मेल):
-दो समीपवर्ती **वर्णों** (ध्वनियों) के परस्पर मेल से जो विकार या परिवर्तन उत्पन्न होता है, उसे सन्धि कहते हैं।
-- *उदाहरण*: विद्या + आलय = **विद्यालय** (स्वर सन्धि)
+दो समीपवर्ती **वर्णों** (ध्वनियों) के परस्पर मेल से जो विकार उत्पन्न होता है, उसे सन्धि कहते हैं।
+- *उदाहरण*: विद्या + आलय = **विद्यालय** (दीर्घ स्वर सन्धि)
 - *प्रकार*: स्वर सन्धि, व्यञ्जन सन्धि, विसर्ग सन्धि।
 
 #### 2. समास (शब्दों का संक्षेप):
-दो या दो से अधिक **शब्दों** (पदों) को मिलाकर एक नया सार्थक संक्षिप्त शब्द बनाने की प्रक्रिया को समास कहते हैं।
+दो या दो से अधिक **शब्दों** (पदों) को मिलाकर एक नया सार्थक संक्षिप्त पद बनाने की प्रक्रिया को समास कहते हैं।
 - *उदाहरण*: राजा का पुत्र = **राजपुत्र** (तत्पुरुष समास)
 - *प्रकार*: अव्ययीभाव, तत्पुरुष, कर्मधारय, द्विगु, द्वन्द्व, बहुव्रीहि।
 
 #### 💡 मुख्य अन्तर:
-- सन्धि में **वर्णों** का योग होता है, जबकि समास में **पदों/शब्दों** का योग होता है।
+- सन्धि में **वर्णों** का योग होता है, जबकि समास में **पदों** का योग होता है।
 - सन्धि को तोड़ना **'सन्धि-विच्छेद'** कहलाता है; समास को अलग करना **'समास-विग्रह'** कहलाता है।`;
     }
 
-    if (q.includes('sanskrit') || q.includes('संस्कृत') || q.includes('धातुरूप') || q.includes('शब्दरूप')) {
+    // 3. Pythagoras Theorem in Hindi / English
+    if (q.includes('pythagor') || q.includes('पायथागोरस') || q.includes('कर्ण')) {
+      if (voiceLang === 'hi-IN' || hasDevanagari || q.includes('hindi')) {
+        return `### 📐 पायथागोरस प्रमेय (Pythagoras Theorem)
+
+**कथन**: किसी समकोण त्रिभुज में, कर्ण का वर्ग शेष दोनों भुजाओं (आधार और लम्ब) के वर्गों के योग के बराबर होता है।
+
+$$\\mathbf{कर्ण^2 = आधार^2 + लम्ब^2} \\quad (c^2 = a^2 + b^2)$$
+
+#### 📝 उदाहरण:
+यदि आधार $b = 3\\text{ सेमी}$ और लम्ब $a = 4\\text{ सेमी}$ है:
+1. $c^2 = 3^2 + 4^2 = 9 + 16 = 25$
+2. $c = \\sqrt{25} = 5\\text{ सेमी}$ (कर्ण की लम्बाई 5 सेमी होगी)।`;
+      }
+
+      return `### 📐 Pythagoras Theorem (Geometry)
+
+In any right-angled triangle, the square of the hypotenuse is equal to the sum of the squares of the adjacent two sides:
+$$\\mathbf{a^2 + b^2 = c^2}$$
+
+For base $3\\text{ cm}$ and height $4\\text{ cm}$:
+$c = \\sqrt{3^2 + 4^2} = \\sqrt{25} = 5\\text{ cm}$.`;
+    }
+
+    // 4. Sanskrit Dhaturoop
+    if (q.includes('sanskrit') || q.includes('संस्कृत') || q.includes('धातुरूप') || q.includes('पठ् धातु')) {
       return `### 📜 संस्कृतम्: पठ् धातु (लट् लकार - वर्तमान काल)
 
-संस्कृत भाषा में क्रियाओं के मूल रूप को **धातु** कहते हैं। 'पठ्' धातु का अर्थ है **'पढ़ना'**।
+संस्कृत में क्रिया के मूल रूप को **धातु** कहते हैं। 'पठ्' धातु का अर्थ है **'पढ़ना'**।
 
 #### 📖 रूप सारणी (लट् लकार):
 | पुरुष | एकवचनम् | द्विवचनम् | बहुवचनम् |
 |---|---|---|---|
 | **प्रथम पुरुष** (He/They) | पठति *(वह पढ़ता है)* | पठतः *(वे दोनों पढ़ते हैं)* | पठन्ति *(वे सब पढ़ते हैं)* |
 | **मध्यम पुरुष** (You) | पठसि *(तुम पढ़ते हो)* | पठथः *(तुम दोनों पढ़ते हो)* | पठथ *(तुम सब पढ़ते हो)* |
-| **उत्तम पुरुष** (I/We) | पठामि *(मैं पढ़ता हूँ)* | पठावः *(हम दोनों पढ़ते हैं)* | पठामः *(हम सब पढ़ते हैं)* |
-
-#### 🌟 सरल अनुवाद:
-- *सह पुस्तकं पठति।* (वह पुस्तक पढ़ता है।)
-- *अहं विद्यालयं गच्छामि।* (मैं विद्यालय जाता हूँ।)`;
+| **उत्तम पुरुष** (I/We) | पठामि *(मैं पढ़ता हूँ)* | पठावः *(हम दोनों पढ़ते हैं)* | पठामः *(हम सब पढ़ते हैं)* |`;
     }
 
-    // 6. Computer / Coding Questions
-    if (q.includes('python') || q.includes('code') || q.includes('loop') || q.includes('variable')) {
+    // 5. Python / Coding
+    if (q.includes('python') || q.includes('code') || q.includes('loop')) {
       return `### 💻 Computer Science: Python For Loop vs While Loop
 
-In Python, loops allow us to repeat a block of code efficiently.
-
-#### 1. For Loop (Definite Iteration):
-Used when you know beforehand how many times you want to loop, or when iterating through a collection (list, string, range).
+1. **For Loop**: Used for iterating over a sequence (list, range, string):
 \`\`\`python
-# Prints numbers 1 through 5
 for i in range(1, 6):
-    print(f"Count: {i}")
+    print(f"Number: {i}")
 \`\`\`
 
-#### 2. While Loop (Condition-Controlled Iteration):
-Repeats as long as a Boolean condition remains \`True\`.
+2. **While Loop**: Runs as long as a condition is True:
 \`\`\`python
-# Counts down until battery is depleted
-battery = 3
-while battery > 0:
-    print(f"Device active, battery: {battery}")
-    battery -= 1
-print("Battery empty!")
-\`\`\`
-
-#### ⚠️ Pro Tip:
-Always make sure the condition in a \`while\` loop eventually becomes \`False\`, otherwise it creates an **infinite loop** that can crash your program!`;
+count = 3
+while count > 0:
+    print(count)
+    count -= 1
+\`\`\``;
     }
 
-    // 7. Learno Platform Questions
-    if (q.includes('exam') || q.includes('term') || q.includes('test')) {
-      return `### 🎯 Learno Examination System
-      
-Learno offers two primary testing modes for **${currentClass}**:
-
-#### 1. 200 Chapter Practice Tests
-- Chapter-by-chapter mastery tests numbered **#001 to #200** across all 8 subjects.
-- Single-choice 5-option MCQs (A, B, C, D, E) with complete instant solutions and explanations.
-
-#### 2. Comprehensive Term Examinations
-- 3 official integrated board-level examinations combining questions across all core subjects.
-- Direct 1-click launch with timed assessment and instant comprehensive performance reports!`;
+    // Jarvis persona responses
+    if (aiMode === 'jarvis') {
+      if (voiceLang === 'hi-IN' || hasDevanagari) {
+        return `जी हाँ, ${user?.name || 'सर'}। आपके प्रश्न "${query}" पर अध्ययन के अनुसार, ${currentClass} पाठ्यक्रम का मुख्य सिद्धांत यह है कि आप पहले मूल अवधारणा को समझें, फिर चरणबद्ध तरीके से अभ्यास करें। क्या आप इस पर अभ्यास प्रश्न चाहते हैं?`;
+      }
+      return `Sir, regarding "${query}": In ${currentClass} curriculum, the key objective is conceptual clarity followed by step-by-step problem verification. Would you like me to formulate a 5-option practice problem on this topic?`;
     }
 
-    if (q.includes('viva') || q.includes('mujhe nahi aata') || q.includes('oral')) {
-      return `### 🎙️ Learno AI Viva Hub & "Mujhe Nahi Aata" Feature
-
-The **AI Viva Hub** is an interactive verbal examiner on your Dashboard:
-
-#### 🌟 Highlights:
-1. **3 Tiers**: Easy (10 chapters), Intermediate (20 chapters), Hard (40 chapters).
-2. **💡 "Mujhe Nahi Aata — AI Samjha Do"**:
-   - If you don't know the answer, click the button or say *"mujhe nahi aata"*!
-   - The AI teacher stops the countdown, speaks an encouraging voice explanation, displays the **Sahi Version (Ideal Answer)**, and lets you re-attempt or move to the next question with partial credit!
-3. **Full Professional English**:
-   - In Communication viva, the AI speaks in executive English and gives a 100% diagnostic with **Spoken Fluency Score** and **Professional Tone Score**.`;
-    }
-
-    if (q.includes('200') || q.includes('tests') || q.includes('chapter')) {
-      return `### 📋 200 Problems Curriculum Directory
-
-In Learno, every class (Classes 5 to 9) has **200 distinct problem tests** numbered from **#001 to #200**:
-- **8 Subjects**: Mathematics, Science, English, Social Science, Computer, Hindi, Sanskrit, and Communication.
-- **List View & Grid View**: Switch between the comprehensive 200-problem directory table or subject card grid.
-- **Concept Tags**: Every test is tagged with syllabus concepts (e.g. \`#Algebra\`, \`#Photosynthesis\`).
-- **5-Option Engine**: Every test features standard competitive 5 choices (A, B, C, D, E) with instant accuracy analytics!`;
-    }
-
-    // Default academic response
+    // Default Academic Response
     return `### 🎓 Academic Solution for ${currentClass}
 
 Regarding your query: **"${query}"**
@@ -426,8 +435,7 @@ In **${currentClass}**, this topic focuses on foundational understanding and pra
 2. **Apply the Rule**: Break the problem down into structured sub-steps rather than guessing.
 3. **Verify the Result**: Double-check units, spelling, or mathematical constraints.
 
-#### 🌟 Practice Tip:
-Would you like me to generate a 5-option practice MCQ on this concept, or break down a specific formula for you? Feel free to ask!`;
+Feel free to ask for a practice problem or formula derivation!`;
   };
 
   const handleSendMessage = async (textToSend?: string) => {
@@ -446,7 +454,7 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
     setInputText('');
     setIsThinking(true);
 
-    // If API Key is provided, call live endpoint with model (openai/gpt-oss-120b)
+    // Call live API if key is available
     if (apiKey) {
       try {
         const recentHistory = messages.slice(-6).map((m) => ({
@@ -458,12 +466,23 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
 
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         };
         if (endpoint.includes('openrouter.ai')) {
           headers['HTTP-Referer'] = window.location.origin;
           headers['X-Title'] = 'Learno AI Tutor';
         }
+
+        const systemPrompt =
+          aiMode === 'jarvis'
+            ? `You are JARVIS, an advanced, highly intelligent voice AI assistant and academic copilot for ${currentClass} students following the CBSE/NCERT syllabus.
+Answer concisely, directly, and conversationally in 2 to 4 crisp sentences so it sounds natural when spoken aloud.
+If the student asks in Hindi, answer fluently in polite, clear Hindi.
+Never use lengthy markdown bulleted textbook essays in Jarvis mode.`
+            : `You are Learno's AI Academic Tutor for ${currentClass} students following the CBSE/NCERT curriculum.
+Provide clear, structured explanations with formulas and examples.
+If the user asks in Hindi, provide a high-quality Hindi explanation.
+For simple arithmetic (e.g. 4 + 4), answer directly in one line.`;
 
         const res = await fetch(endpoint, {
           method: 'POST',
@@ -471,23 +490,12 @@ Would you like me to generate a 5-option practice MCQ on this concept, or break 
           body: JSON.stringify({
             model: apiModel || 'openai/gpt-oss-120b',
             messages: [
-              {
-                role: 'system',
-                content: `You are Learno's AI Academic Tutor for ${currentClass} students following the CBSE/NCERT curriculum.
-
-RULES FOR ANSWER QUALITY:
-1. ADAPTIVE LENGTH: Match your response directly to the complexity of the question.
-   - For basic arithmetic (e.g. "4 + 4", "15 * 6"), simple calculations, or short questions: Answer directly and concisely in 1-2 lines (e.g. "4 + 4 = 8").
-   - NEVER create 5-section textbook essays, counting tables, number lines, or multi-step breakdown tutorials for trivial questions like "4 + 4"!
-   - For complex concepts, multi-step math/science problems, or when the user asks "explain" or "solve step-by-step": Provide a clear, well-structured explanation with key formulas.
-2. NO UNSOLICITED FILLER: Never add unrequested sections like "Why does it work?", ASCII number lines, or "Practice Problems" unless the student explicitly asks for practice questions.
-3. TONE: Warm, natural, concise, and helpful.`,
-              },
+              { role: 'system', content: systemPrompt },
               ...recentHistory,
               { role: 'user', content: text },
             ],
             temperature: 0.7,
-            max_tokens: 1200,
+            max_tokens: aiMode === 'jarvis' ? 400 : 1200,
           }),
         });
 
@@ -497,13 +505,15 @@ RULES FOR ANSWER QUALITY:
         }
 
         const data = await res.json();
-        const responseText = data.choices?.[0]?.message?.content || 'I could not generate an answer at this moment.';
+        const responseText =
+          data.choices?.[0]?.message?.content || 'I could not generate an answer at this moment.';
 
         const aiMsg: ChatMessage = {
           id: `ai-${Date.now()}`,
           sender: 'ai',
           text: responseText,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          isJarvis: aiMode === 'jarvis',
         };
 
         setMessages((prev) => [...prev, aiMsg]);
@@ -514,23 +524,7 @@ RULES FOR ANSWER QUALITY:
         }
         return;
       } catch (err: any) {
-        console.warn('API call failed, falling back to local academic engine:', err);
-        const fallbackText = generateAiTutorResponse(text);
-        // Seamlessly return answer without technical error banners
-        const aiMsg: ChatMessage = {
-          id: `ai-${Date.now()}`,
-          sender: 'ai',
-          text: fallbackText,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-
-        setMessages((prev) => [...prev, aiMsg]);
-        setIsThinking(false);
-
-        if (isVoiceEnabled) {
-          speakText(fallbackText);
-        }
-        return;
+        console.warn('API call failed, using local academic engine:', err);
       }
     }
 
@@ -542,6 +536,7 @@ RULES FOR ANSWER QUALITY:
         sender: 'ai',
         text: responseText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isJarvis: aiMode === 'jarvis',
       };
 
       setMessages((prev) => [...prev, aiMsg]);
@@ -550,7 +545,7 @@ RULES FOR ANSWER QUALITY:
       if (isVoiceEnabled) {
         speakText(responseText);
       }
-    }, 550);
+    }, 450);
   };
 
   const handleCopy = (id: string, text: string) => {
@@ -565,28 +560,36 @@ RULES FOR ANSWER QUALITY:
       {
         id: 'welcome',
         sender: 'ai',
-        text: `Chat cleared! Ask me any doubt in Mathematics, Science, English, SST, Computer, Hindi, Sanskrit, Communication, or how to use Learno!`,
+        text: `Chat cleared! Ask me any doubt in Mathematics, Science, English, SST, Computer, Hindi, Sanskrit, or Communication in English or Hindi!`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
   };
 
-  const suggestionChips = [
-    '📐 Solve 2x + 5 = 15 step-by-step',
-    '🔬 Explain Photosynthesis chemical equation',
-    '🗣️ How to disagree politely in English?',
-    '💻 Python for-loop vs while-loop',
-    '🇮🇳 सन्धि और समास में क्या अंतर है?',
-    '📜 संस्कृत: पठ् धातु रूप लट् लकार',
-    '🎯 What are Comprehensive Term Examinations?',
-    '🎙️ What is "Mujhe Nahi Aata" in AI Viva?',
-  ];
+  const suggestionChips =
+    voiceLang === 'hi-IN'
+      ? [
+          '🔬 प्रकाश संश्लेषण का रासायनिक समीकरण समझाइए',
+          '🇮🇳 सन्धि और समास में क्या अंतर है?',
+          '📐 पायथागोरस प्रमेय और उदाहरण',
+          '📜 संस्कृत: पठ् धातु रूप लट् लकार',
+          '💻 Python में for loop और while loop',
+          '⚡ 2x + 5 = 15 को हल करें',
+        ]
+      : [
+          '📐 Solve 2x + 5 = 15 step-by-step',
+          '🔬 Explain Photosynthesis equation',
+          '🗣️ How to disagree politely in English?',
+          '💻 Python for-loop vs while-loop',
+          '📜 Sanskrit: पठ् धातु रूप लट् लकार',
+          '🎯 How does Learno 200 Tests work?',
+        ];
 
   if (!isOpen) return null;
 
   return (
     <>
-      {/* Backdrop (Active in sidebar mode on mobile or when clicked) */}
+      {/* Backdrop */}
       <div
         onClick={onClose}
         className={`fixed inset-0 z-40 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${
@@ -599,98 +602,251 @@ RULES FOR ANSWER QUALITY:
         className={`fixed z-50 bg-[#050505] border-l border-white/10 shadow-2xl flex flex-col transition-all duration-300 ease-out font-sans ${
           viewMode === 'fullscreen'
             ? 'inset-0 w-full h-full'
-            : 'top-0 right-0 bottom-0 w-full sm:w-[480px] md:w-[520px] lg:w-[560px]'
+            : 'top-0 right-0 bottom-0 w-full sm:w-[500px] md:w-[540px] lg:w-[580px]'
         }`}
       >
         {/* Drawer Header */}
-        <div className="px-5 py-4 bg-[#0A0D14] border-b border-white/10 text-white flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-[#00FF66]/10 border border-[#00FF66]/30 flex items-center justify-center text-[#00FF66] shadow-[0_0_15px_rgba(0,255,102,0.2)] flex-shrink-0">
-              <Bot className="w-5 h-5" />
+        <div className="px-4 sm:px-5 py-3.5 bg-[#0A0D14] border-b border-white/10 text-white flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div
+              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+                aiMode === 'jarvis'
+                  ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-400/40 shadow-[0_0_20px_rgba(6,182,212,0.4)]'
+                  : 'bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/30 shadow-[0_0_15px_rgba(0,255,102,0.2)]'
+              }`}
+            >
+              {aiMode === 'jarvis' ? <Zap className="w-5 h-5 animate-pulse" /> : <Bot className="w-5 h-5" />}
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#00FF66] truncate">
-                  LEARNO // NEURAL COPILOT
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span
+                  className={`font-mono text-[10px] font-black uppercase tracking-[0.18em] truncate ${
+                    aiMode === 'jarvis' ? 'text-cyan-400' : 'text-[#00FF66]'
+                  }`}
+                >
+                  {aiMode === 'jarvis' ? 'JARVIS // VOICE AI RIG' : 'LEARNO // NEURAL COPILOT'}
                 </span>
-                <span className="font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-300 text-[9px] font-bold uppercase flex-shrink-0">
+                <span className="font-mono px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-neutral-300 text-[9px] font-bold uppercase flex-shrink-0">
                   {currentClass}
                 </span>
               </div>
-              <h3 className="text-xs sm:text-sm font-display font-bold text-white flex items-center gap-2 truncate mt-0.5">
-                <span>Academic Intelligence Rig</span>
-                <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-pulse flex-shrink-0 shadow-[0_0_8px_#00FF66]" />
+              <h3 className="text-xs sm:text-sm font-display font-bold text-white flex items-center gap-1.5 truncate mt-0.5">
+                <span>{aiMode === 'jarvis' ? 'Jarvis Conversational AI' : 'Academic Intelligence Rig'}</span>
+                <span
+                  className={`w-2 h-2 rounded-full animate-pulse flex-shrink-0 ${
+                    aiMode === 'jarvis'
+                      ? 'bg-cyan-400 shadow-[0_0_10px_#22d3ee]'
+                      : 'bg-[#00FF66] shadow-[0_0_8px_#00FF66]'
+                  }`}
+                />
               </h3>
             </div>
           </div>
 
-          {/* Action buttons: Speech, View Mode, Clear, Close */}
-          <div className="flex items-center gap-1.5 flex-shrink-0 font-mono">
+          {/* Action buttons: Mode Switcher, Language Toggle, Audio, Expand, Close */}
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 font-mono">
+            {/* Language Switcher Pill: HI (Hindi) vs EN (English) */}
+            <button
+              onClick={handleToggleLanguage}
+              className={`px-2 py-1.5 rounded-lg border text-[10px] font-bold flex items-center gap-1 transition-all ${
+                voiceLang === 'hi-IN'
+                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+                  : 'bg-blue-500/15 border-blue-500/40 text-blue-300 shadow-[0_0_10px_rgba(59,130,246,0.2)]'
+              }`}
+              title={`Active Voice & Mic Language: ${voiceLang === 'hi-IN' ? 'Hindi (हिन्दी)' : 'English'}. Click to toggle.`}
+            >
+              <Globe className="w-3 h-3" />
+              <span>{voiceLang === 'hi-IN' ? '🇮🇳 HI' : '🇬🇧 EN'}</span>
+            </button>
+
             {/* Audio Readout Toggle */}
             <button
               onClick={() => {
                 if (isAiSpeaking) stopSpeaking();
                 setIsVoiceEnabled(!isVoiceEnabled);
               }}
-              className={`p-2 rounded-xl transition-all border ${
+              className={`p-1.5 sm:p-2 rounded-lg transition-all border ${
                 isVoiceEnabled
                   ? 'bg-[#00FF66]/10 border-[#00FF66]/40 text-[#00FF66]'
-                  : 'bg-white/5 border-white/10 text-slate-500'
+                  : 'bg-white/5 border-white/10 text-neutral-400'
               }`}
               title={isVoiceEnabled ? 'AI Voice Enabled (Click to Mute)' : 'AI Voice Muted (Click to Enable)'}
             >
-              {isVoiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              {isVoiceEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
             </button>
 
-            {/* Adjustable View Mode: Sidebar <-> Fullscreen */}
+            {/* View Mode: Sidebar <-> Fullscreen */}
             <button
               onClick={() => setViewMode(viewMode === 'sidebar' ? 'fullscreen' : 'sidebar')}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors"
+              className="p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 hover:text-white transition-colors"
               title={viewMode === 'sidebar' ? 'Expand to Full Page Mode' : 'Collapse to Sidebar'}
             >
-              {viewMode === 'sidebar' ? (
-                <Maximize2 className="w-4 h-4" />
-              ) : (
-                <Minimize2 className="w-4 h-4" />
-              )}
+              {viewMode === 'sidebar' ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
             </button>
 
             {/* Clear History */}
             <button
               onClick={handleClearHistory}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors"
+              className="p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 hover:text-white transition-colors"
               title="Clear chat history"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-3.5 h-3.5" />
             </button>
 
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-white/5 hover:bg-rose-500/20 hover:text-rose-400 border border-white/10 text-slate-400 transition-colors"
-              title="Close Copilot"
+              className="p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-rose-500/20 hover:text-rose-400 border border-white/10 text-neutral-400 transition-colors"
+              title="Close AI Tutor"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
+        {/* Mode Selector Strip: NORMAL vs JARVIS */}
+        <div className="px-4 py-2 bg-[#080B11] border-b border-white/10 flex items-center justify-between font-mono text-xs flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+              OPERATING MODE:
+            </span>
+            <div className="inline-flex rounded-lg bg-black/40 p-0.5 border border-white/10">
+              <button
+                type="button"
+                onClick={() => setAiMode('normal')}
+                className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                  aiMode === 'normal'
+                    ? 'bg-[#00FF66] text-black shadow-[0_0_12px_rgba(0,255,102,0.4)]'
+                    : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                <Bot className="w-3 h-3" />
+                <span>NORMAL</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAiMode('jarvis')}
+                className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                  aiMode === 'jarvis'
+                    ? 'bg-cyan-400 text-black shadow-[0_0_12px_rgba(6,182,212,0.6)]'
+                    : 'text-neutral-400 hover:text-cyan-300'
+                }`}
+              >
+                <Zap className="w-3 h-3" />
+                <span>⚡ JARVIS</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="hidden sm:flex items-center gap-2 text-[10px] text-neutral-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse" />
+            <span>MIC: {voiceLang === 'hi-IN' ? 'HINDI (हिन्दी)' : 'ENGLISH'}</span>
+          </div>
+        </div>
+
         {/* Suggestion Chips Banner */}
-        <div className="px-4 py-2.5 bg-[#080B11] border-b border-white/10 flex items-center gap-2 overflow-x-auto flex-shrink-0 font-mono">
+        <div className="px-4 py-2 bg-[#080B11] border-b border-white/10 flex items-center gap-2 overflow-x-auto flex-shrink-0 font-mono">
           <Sparkles className="w-3.5 h-3.5 text-[#00FF66] flex-shrink-0" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 whitespace-nowrap">
             TOPICS:
           </span>
           {suggestionChips.map((chip, idx) => (
             <button
               key={idx}
               onClick={() => handleSendMessage(chip)}
-              className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-[#00FF66]/10 hover:border-[#00FF66]/40 text-slate-300 hover:text-[#00FF66] text-[10px] font-medium border border-white/10 whitespace-nowrap transition-colors"
+              className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-[#00FF66]/10 hover:border-[#00FF66]/40 text-neutral-300 hover:text-[#00FF66] text-[10px] font-medium border border-white/10 whitespace-nowrap transition-colors"
             >
               {chip}
             </button>
           ))}
         </div>
+
+        {/* JARVIS MODE ACTIVE HERO PANEL (When Jarvis Mode is Selected) */}
+        {aiMode === 'jarvis' && (
+          <div className="p-4 sm:p-5 bg-cyan-950/20 border-b border-cyan-500/20 flex flex-col items-center justify-center text-center font-mono flex-shrink-0 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(6,182,212,0.1),transparent_70%)] pointer-events-none" />
+
+            {/* Glowing Cyber Visualizer Core */}
+            <div className="relative mb-3 flex items-center justify-center">
+              <div
+                className={`w-20 h-20 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                  isListening
+                    ? 'border-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.6)] animate-pulse scale-110'
+                    : isAiSpeaking
+                    ? 'border-cyan-400 shadow-[0_0_30px_rgba(34,211,238,0.6)] animate-spin'
+                    : 'border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
+                }`}
+              >
+                <div
+                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
+                    isListening
+                      ? 'bg-rose-500/20 text-rose-400'
+                      : isAiSpeaking
+                      ? 'bg-cyan-500/30 text-cyan-300'
+                      : 'bg-cyan-950/40 text-cyan-400'
+                  }`}
+                >
+                  <Zap className={`w-7 h-7 ${isListening || isAiSpeaking ? 'animate-bounce' : ''}`} />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[11px] font-black tracking-widest text-cyan-400 uppercase">
+                {isListening
+                  ? `[ LISTENING IN ${voiceLang === 'hi-IN' ? 'HINDI (हिन्दी)' : 'ENGLISH'}... ]`
+                  : isAiSpeaking
+                  ? '[ JARVIS IS SPEAKING... ]'
+                  : isThinking
+                  ? '[ NEURAL ENGINE PROCESSING... ]'
+                  : '[ JARVIS READY // TAP MIC TO TALK ]'}
+              </span>
+              <p className="text-[11px] text-neutral-400 max-w-sm">
+                Hands-free conversational tutor. Speak in <strong>Hindi</strong> or <strong>English</strong>. Jarvis answers and speaks back automatically!
+              </p>
+            </div>
+
+            {/* Quick Action in Jarvis HUD */}
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleListening}
+                className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shadow-lg ${
+                  isListening
+                    ? 'bg-rose-500 hover:bg-rose-600 text-white animate-pulse'
+                    : 'bg-cyan-400 hover:bg-cyan-300 text-black shadow-[0_0_15px_rgba(34,211,238,0.4)]'
+                }`}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                <span>{isListening ? 'STOP LISTENING' : 'TALK TO JARVIS'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsJarvisContinuous(!isJarvisContinuous)}
+                className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 ${
+                  isJarvisContinuous
+                    ? 'bg-cyan-500/15 border-cyan-400/40 text-cyan-300'
+                    : 'bg-white/5 border-white/10 text-neutral-400'
+                }`}
+                title="Continuous conversation automatically re-arms mic after speaking"
+              >
+                <Radio className={`w-3.5 h-3.5 ${isJarvisContinuous ? 'animate-pulse text-cyan-400' : ''}`} />
+                <span>{isJarvisContinuous ? 'AUTO-LOOP: ON' : 'AUTO-LOOP: OFF'}</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Speech Error Banner if any */}
+        {speechError && (
+          <div className="px-4 py-2 bg-rose-500/10 border-b border-rose-500/30 text-rose-300 font-mono text-xs flex items-center justify-between">
+            <span>{speechError}</span>
+            <button onClick={() => setSpeechError(null)} className="text-white hover:underline">
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {/* Chat Messages Container with isolated scroll */}
         <div
@@ -703,16 +859,22 @@ RULES FOR ANSWER QUALITY:
               className={`flex gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {msg.sender === 'ai' && (
-                <div className="w-8 h-8 rounded-xl bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66] flex items-center justify-center flex-shrink-0 mt-1 shadow-sm">
-                  <Bot className="w-4 h-4" />
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-sm ${
+                    msg.isJarvis
+                      ? 'bg-cyan-500/10 border border-cyan-400/30 text-cyan-400'
+                      : 'bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66]'
+                  }`}
+                >
+                  {msg.isJarvis ? <Zap className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                 </div>
               )}
 
               <div
                 className={`max-w-[88%] sm:max-w-[82%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed ${
                   msg.sender === 'user'
-                    ? 'bg-[#00FF66]/15 border border-[#00FF66]/40 text-white font-medium rounded-tr-sm shadow-[0_0_15px_rgba(0,255,102,0.1)]'
-                    : 'bg-[#0A0D14]/90 border border-white/10 text-slate-200 rounded-tl-sm shadow-card'
+                    ? 'bg-[#00FF66]/15 border border-[#00FF66]/40 text-slate-900 dark:text-white font-medium rounded-tr-sm shadow-[0_0_15px_rgba(0,255,102,0.1)]'
+                    : 'bg-white dark:bg-[#0A0D14]/90 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-200 rounded-tl-sm shadow-card'
                 }`}
               >
                 {/* Message Content */}
@@ -726,12 +888,19 @@ RULES FOR ANSWER QUALITY:
 
                 {/* Footer bar for AI responses */}
                 {msg.sender === 'ai' && (
-                  <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between font-mono text-[10px] text-slate-400">
-                    <span>{msg.timestamp}</span>
+                  <div className="mt-3 pt-2 border-t border-slate-200 dark:border-white/10 flex items-center justify-between font-mono text-[10px] text-slate-500 dark:text-slate-400">
+                    <span className="flex items-center gap-1.5">
+                      <span>{msg.timestamp}</span>
+                      {msg.isJarvis && (
+                        <span className="px-1.5 py-0.2 rounded bg-cyan-500/15 text-cyan-400 font-bold text-[9px]">
+                          ⚡ JARVIS
+                        </span>
+                      )}
+                    </span>
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => handleCopy(msg.id, msg.text)}
-                        className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                        className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                         title="Copy text"
                       >
                         {copiedId === msg.id ? (
@@ -742,7 +911,7 @@ RULES FOR ANSWER QUALITY:
                       </button>
                       <button
                         onClick={() => speakText(msg.text)}
-                        className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                        className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                         title="Read answer aloud"
                       >
                         <Volume2 className="w-3.5 h-3.5" />
@@ -757,15 +926,21 @@ RULES FOR ANSWER QUALITY:
           {/* Thinking indicator */}
           {isThinking && (
             <div className="flex gap-3 justify-start animate-in fade-in">
-              <div className="w-8 h-8 rounded-xl bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66] flex items-center justify-center flex-shrink-0 mt-1 shadow-sm">
+              <div
+                className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-sm ${
+                  aiMode === 'jarvis'
+                    ? 'bg-cyan-500/10 border border-cyan-400/30 text-cyan-400'
+                    : 'bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66]'
+                }`}
+              >
                 <Bot className="w-4 h-4 animate-spin" />
               </div>
-              <div className="bg-[#0A0D14] rounded-2xl p-4 border border-white/10 rounded-tl-sm shadow-sm flex items-center gap-2">
+              <div className="bg-white dark:bg-[#0A0D14] rounded-2xl p-4 border border-slate-200 dark:border-white/10 rounded-tl-sm shadow-sm flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-bounce [animation-delay:-0.3s]" />
                 <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-bounce [animation-delay:-0.15s]" />
                 <span className="w-2 h-2 rounded-full bg-[#00FF66] animate-bounce" />
-                <span className="font-mono text-xs text-[#00FF66] font-medium pl-1">
-                  COGNITIVE ENGINE EVALUATING PROMPT...
+                <span className="font-mono text-xs text-slate-800 dark:text-[#00FF66] font-bold pl-1">
+                  {aiMode === 'jarvis' ? 'JARVIS EVALUATING VOICE TELEMETRY...' : 'COGNITIVE ENGINE EVALUATING PROMPT...'}
                 </span>
               </div>
             </div>
@@ -781,7 +956,7 @@ RULES FOR ANSWER QUALITY:
             <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#00FF66]/10 text-[#00FF66] text-xs border border-[#00FF66]/30 font-mono">
               <span className="flex items-center gap-1.5 font-bold">
                 <Volume2 className="w-3.5 h-3.5 animate-pulse" />
-                NEURAL SYNTHESIZER SPEAKING...
+                <span>{aiMode === 'jarvis' ? 'JARVIS SPEAKING...' : 'NEURAL SYNTHESIZER SPEAKING...'}</span>
               </span>
               <button
                 onClick={stopSpeaking}
@@ -799,16 +974,16 @@ RULES FOR ANSWER QUALITY:
             }}
             className="flex items-center gap-2"
           >
-            {/* Voice Input Button */}
+            {/* Bilingual Voice Input Mic Button */}
             <button
               type="button"
               onClick={toggleListening}
-              className={`p-2.5 rounded-xl border transition-all ${
+              className={`p-2.5 rounded-xl border transition-all flex items-center gap-1.5 ${
                 isListening
-                  ? 'bg-rose-500 text-white border-rose-600 animate-pulse'
+                  ? 'bg-rose-500 text-white border-rose-600 animate-pulse shadow-[0_0_15px_rgba(244,63,94,0.5)]'
                   : 'bg-white/5 text-slate-300 hover:bg-white/10 border-white/10'
               }`}
-              title={isListening ? 'Listening... click to stop' : 'Ask question by voice (Mic)'}
+              title={`Ask by Voice (${voiceLang === 'hi-IN' ? 'Hindi / हिन्दी' : 'English'}). Click to speak.`}
             >
               {isListening ? <Mic className="w-4 h-4 animate-bounce text-white" /> : <Mic className="w-4 h-4" />}
             </button>
@@ -819,24 +994,34 @@ RULES FOR ANSWER QUALITY:
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder={`Ask doubt in ${currentClass} Maths, Science, English, SST, Hindi...`}
-              className="flex-1 px-4 py-2.5 text-xs sm:text-sm rounded-xl bg-[#050505] border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:border-[#00FF66] focus:ring-1 focus:ring-[#00FF66] transition-all font-mono"
+              placeholder={
+                voiceLang === 'hi-IN'
+                  ? `हिंदी या अंग्रेजी में पूछें (Maths, Science, Hindi, English)...`
+                  : `Ask doubt in ${currentClass} Maths, Science, English, SST, Hindi...`
+              }
+              className="flex-1 px-4 py-2.5 text-xs sm:text-sm rounded-xl bg-[#050505] border border-white/15 text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-[#00FF66] focus:ring-1 focus:ring-[#00FF66] transition-all font-mono"
             />
 
             {/* Send Button */}
             <button
               type="submit"
               disabled={!inputText.trim() || isThinking}
-              className="p-2.5 rounded-xl bg-[#00FF66] hover:bg-[#00FF66]/90 disabled:opacity-40 text-black font-bold transition-all shadow-[0_0_15px_rgba(0,255,102,0.3)] flex items-center justify-center"
+              className={`p-2.5 rounded-xl font-bold transition-all flex items-center justify-center ${
+                aiMode === 'jarvis'
+                  ? 'bg-cyan-400 hover:bg-cyan-300 disabled:opacity-40 text-black shadow-[0_0_15px_rgba(34,211,238,0.4)]'
+                  : 'bg-[#00FF66] hover:bg-[#00FF66]/90 disabled:opacity-40 text-black shadow-[0_0_15px_rgba(0,255,102,0.3)]'
+              }`}
               title="Send question"
             >
               <Send className="w-4 h-4" />
             </button>
           </form>
 
-          <div className="flex items-center justify-between font-mono text-[9px] text-slate-400 px-1">
+          <div className="flex items-center justify-between font-mono text-[9px] text-slate-500 dark:text-slate-400 px-1">
             <span>LEARNO // RIG ARCHITECTURE 5–9</span>
-            <span>MODE: {viewMode === 'fullscreen' ? 'EXPANDED' : 'DRAWER'}</span>
+            <span>
+              MODE: {aiMode === 'jarvis' ? 'JARVIS VOICE' : 'NORMAL'} • LANG: {voiceLang === 'hi-IN' ? 'HINDI' : 'ENGLISH'}
+            </span>
           </div>
         </div>
       </div>

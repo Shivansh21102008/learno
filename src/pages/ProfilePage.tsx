@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCurriculum } from '../context/CurriculumContext';
+import { useTheme } from '../context/ThemeContext';
 import { VALID_CLASSES, StudentClass } from '../types';
 import {
   User as UserIcon,
@@ -13,6 +14,8 @@ import {
   RotateCcw,
   Save,
   AlertTriangle,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 interface ProfilePageProps {
@@ -22,6 +25,7 @@ interface ProfilePageProps {
 export const ProfilePage: React.FC<ProfilePageProps> = ({ onOpenClassModal }) => {
   const { user, updateProfile, resetToDemo } = useAuth();
   const { stats } = useCurriculum();
+  const { theme, setTheme } = useTheme();
 
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
@@ -132,6 +136,99 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onOpenClassModal }) =>
             {user.streak} DAYS
           </div>
           <div className="text-[10px] text-neutral-400 uppercase tracking-wider">Streak</div>
+        </div>
+      </div>
+
+      {/* Interface Appearance / Theme Settings */}
+      <div className="bg-[#0A0D14]/90 border border-white/10 rounded-2xl p-6 sm:p-8 shadow-card">
+        <div className="mb-6 pb-4 border-b border-white/10">
+          <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#00FF66]">
+            SYSTEM SETTINGS // THEME MODE
+          </div>
+          <h3 className="text-base font-display font-bold text-white mt-0.5">Interface Appearance</h3>
+          <p className="text-xs text-neutral-400">
+            Select your preferred visual mode for the entire Learno learning workspace.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono">
+          {/* Dark Mode Option */}
+          <button
+            type="button"
+            onClick={() => setTheme('dark')}
+            className={`p-5 rounded-xl border text-left transition-all relative flex flex-col justify-between ${
+              theme === 'dark'
+                ? 'border-[#00FF66] bg-[#00FF66]/10 shadow-[0_0_20px_rgba(0,255,102,0.15)] ring-1 ring-[#00FF66]'
+                : 'border-white/10 bg-[#050505] hover:border-white/20'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+                    theme === 'dark' ? 'bg-[#00FF66] text-black font-bold' : 'bg-white/5 text-neutral-400'
+                  }`}
+                >
+                  <Moon className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="font-bold text-xs uppercase tracking-wider text-white block">
+                    DARK CYBER
+                  </span>
+                  <span className="text-[10px] text-neutral-500 uppercase tracking-widest">
+                    OBSIDIAN BLACK
+                  </span>
+                </div>
+              </div>
+              {theme === 'dark' && (
+                <span className="px-2 py-0.5 rounded bg-[#00FF66] text-black text-[10px] font-bold shadow-[0_0_8px_rgba(0,255,102,0.4)]">
+                  ACTIVE
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-neutral-400 leading-relaxed">
+              Glitch9 cyberpunk theme featuring deep obsidian black background (#050505) and vibrant neon green (#00FF66) accents. Ideal for low-light focus.
+            </p>
+          </button>
+
+          {/* Light Mode Option */}
+          <button
+            type="button"
+            onClick={() => setTheme('light')}
+            className={`p-5 rounded-xl border text-left transition-all relative flex flex-col justify-between ${
+              theme === 'light'
+                ? 'border-[#00FF66] bg-[#00FF66]/10 shadow-[0_0_20px_rgba(0,255,102,0.15)] ring-1 ring-[#00FF66]'
+                : 'border-white/10 bg-[#050505] hover:border-white/20'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+                    theme === 'light' ? 'bg-[#00FF66] text-black font-bold' : 'bg-white/5 text-neutral-400'
+                  }`}
+                >
+                  <Sun className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="font-bold text-xs uppercase tracking-wider text-white block">
+                    LIGHT STUDIO
+                  </span>
+                  <span className="text-[10px] text-neutral-500 uppercase tracking-widest">
+                    CLEAN SLATE
+                  </span>
+                </div>
+              </div>
+              {theme === 'light' && (
+                <span className="px-2 py-0.5 rounded bg-[#00FF66] text-black text-[10px] font-bold shadow-[0_0_8px_rgba(0,255,102,0.4)]">
+                  ACTIVE
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-neutral-400 leading-relaxed">
+              Clean studio daylight aesthetic with crisp slate background (#F8FAFC) and high-contrast dark typography. Optimized for bright environments.
+            </p>
+          </button>
         </div>
       </div>
 
