@@ -55,7 +55,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
         <div className="max-w-4xl mx-auto text-center space-y-7 relative z-10">
           {/* Glitch9 Telemetry Eyebrow */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/80 border border-white/15 text-neutral-300 font-mono text-[10px] sm:text-xs tracking-[0.25em] uppercase shadow-inner">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#00FF66]/10 border border-[#00FF66]/40 text-[#00FF66] font-mono text-[10px] sm:text-xs tracking-[0.25em] uppercase font-bold shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_8px_#00FF66]" />
             <span>CLOUD ACADEMIC RIGS // CLASSES 5–9</span>
           </div>

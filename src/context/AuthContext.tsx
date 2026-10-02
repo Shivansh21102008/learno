@@ -103,6 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     const saved = localStorage.getItem('learno_is_authenticated');
+    if (saved === null) return true; // Default to true so user sees Home page after intro
     return saved === 'true';
   });
 
