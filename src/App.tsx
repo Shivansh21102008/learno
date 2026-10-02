@@ -26,16 +26,16 @@ import { Trophy, X, Bot } from 'lucide-react';
 const MainLayout: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const [showIntro, setShowIntro] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>('All');
   const [isClassModalOpen, setIsClassModalOpen] = useState(false);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
   const [isAiTutorOpen, setIsAiTutorOpen] = useState(false);
 
-  // Trigger cinematic intro whenever user authenticates
+  // When user authenticates, ensure active tab is 'home'
   React.useEffect(() => {
     if (isAuthenticated) {
-      setShowIntro(true);
+      setActiveTab('home');
     }
   }, [isAuthenticated]);
 
@@ -57,14 +57,21 @@ const MainLayout: React.FC = () => {
     dismissBadgeToast,
   } = useCurriculum();
 
-  // If student is not signed up / logged in, strictly enforce the Auth Gate Screen
-  if (!isAuthenticated) {
-    return <AuthGateScreen />;
+  // 1. Cinematic Intro Screen on Website Open: "Made & Directed By Rudra Giri"
+  if (showIntro) {
+    return (
+      <CinematicIntroScreen
+        onComplete={() => {
+          setShowIntro(false);
+          setActiveTab('home');
+        }}
+      />
+    );
   }
 
-  // Cinematic Intro on Login / Open: "Made & Directed By Rudra Giri"
-  if (showIntro) {
-    return <CinematicIntroScreen onComplete={() => setShowIntro(false)} />;
+  // 2. If student is not signed up / logged in, strictly enforce the Auth Gate Screen
+  if (!isAuthenticated) {
+    return <AuthGateScreen />;
   }
 
   // If student is currently taking an exam, show full-screen examination interface!
