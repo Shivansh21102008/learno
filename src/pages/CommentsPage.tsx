@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { CommentItem, CommentCategory, CommentChannel } from '../types';
 import {
-  hasAdminPasswordSet,
-  setInitialAdminPassword,
   verifyAdminPassword,
   changeAdminPassword,
 } from '../utils/adminSecurity';
@@ -29,11 +27,10 @@ import {
   Key,
   X,
   Layers,
-  ShieldAlert,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'learno_community_comments';
-const ADMIN_SESSION_KEY = 'learno_admin_unlocked_session';
+const ADMIN_UNLOCKED_STORAGE_KEY = 'learno_admin_unlocked_system';
 
 // Helper to format date and time in Indian Standard Format
 const getCurrentDate = (): string => {
@@ -74,33 +71,32 @@ export const OFFICIAL_LEARNO_FAMILY_ANNOUNCEMENT: CommentItem = {
   adminNote: 'Director & Founder – Learno Family',
 };
 
+// Helper to immediately persist comments to localStorage
+const persistComments = (items: CommentItem[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  } catch (err) {
+    console.error('Failed to persist comments to storage:', err);
+  }
+};
+
 export const CommentsPage: React.FC = () => {
   const { user } = useAuth();
 
   // Mode: 'user' (Community Board) or 'admin' (Admin Announcements)
   const [activeChannel, setActiveChannel] = useState<CommentChannel>('user');
 
-  // Filter Category: 'all' | 'accepted' | 'experience' | 'problem'
+  // Filter Category: 'all' | 'accepted' | 'experience' | 'problem' | 'announcements'
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // 100-Layer Password State
-  const [isPasswordSet, setIsPasswordSet] = useState<boolean>(() => hasAdminPasswordSet());
+  // Admin Unlocked State stored in localStorage so Shivansh's system stays unlocked
   const [isAdminUnlocked, setIsAdminUnlocked] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    return sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+    return localStorage.getItem(ADMIN_UNLOCKED_STORAGE_KEY) === 'true';
   });
 
-  // Modal 1: Set Initial Admin Password Modal (First-time setup)
-  const [isSetPasswordModalOpen, setIsSetPasswordModalOpen] = useState(false);
-  const [initialPasswordInput, setInitialPasswordInput] = useState('');
-  const [initialConfirmInput, setInitialConfirmInput] = useState('');
-  const [showInitialPwd, setShowInitialPwd] = useState(false);
-  const [isSettingPassword, setIsSettingPassword] = useState(false);
-  const [setupProgress, setSetupProgress] = useState(0);
-  const [setupError, setSetupError] = useState<string | null>(null);
-
-  // Modal 2: Unlock Admin Password Modal
+  // Modal 1: Unlock Admin Password Modal (Only modal when clicking Admin Messages)
   const [isUnlockModalOpen, setIsUnlockModalOpen] = useState(false);
   const [unlockPasswordInput, setUnlockPasswordInput] = useState('');
   const [showUnlockPassword, setShowUnlockPassword] = useState(false);
@@ -108,7 +104,7 @@ export const CommentsPage: React.FC = () => {
   const [unlockProgress, setUnlockProgress] = useState(0);
   const [unlockError, setUnlockError] = useState<string | null>(null);
 
-  // Modal 3: Change Admin Password Modal (Requires Current Password)
+  // Modal 2: Change Admin Password Modal (Requires Current Password)
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const [currentPwdInput, setCurrentPwdInput] = useState('');
   const [newPwdInput, setNewPwdInput] = useState('');
@@ -120,41 +116,20 @@ export const CommentsPage: React.FC = () => {
   const [isChangingPwd, setIsChangingPwd] = useState(false);
   const [changePwdProgress, setChangePwdProgress] = useState(0);
 
-  // Load genuine messages with 100% real likes (zero fake likes)
+  // Load genuine messages with persistent likes and comments across refreshes
   const [comments, setComments] = useState<CommentItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const validComments = parsed
-            .filter(
-              (c: any) =>
-                c &&
-                c.id &&
-                !c.id.startsWith('user_comment_01') &&
-                !c.id.startsWith('user_comment_02') &&
-                !c.id.startsWith('user_comment_03')
-            )
-            .map((c: any) => {
-              // Sanitize any previous mock/fake high like numbers
-              if (c.id === OFFICIAL_LEARNO_FAMILY_ANNOUNCEMENT.id && c.likes >= 20) {
-                return {
-                  ...c,
-                  likes: c.likedByMe ? 1 : 0,
-                };
-              }
-              return c;
-            });
-
-          // Check if Learno Family announcement is already in the list
-          const hasAnnouncement = validComments.some(
-            (c: any) => c.id === OFFICIAL_LEARNO_FAMILY_ANNOUNCEMENT.id || c.channel === 'admin'
+          const hasAnnouncement = parsed.some(
+            (c: any) => c && (c.id === OFFICIAL_LEARNO_FAMILY_ANNOUNCEMENT.id || c.channel === 'admin')
           );
           if (hasAnnouncement) {
-            return validComments;
+            return parsed;
           }
-          return [OFFICIAL_LEARNO_FAMILY_ANNOUNCEMENT, ...validComments];
+          return [OFFICIAL_LEARNO_FAMILY_ANNOUNCEMENT, ...parsed];
         }
       }
     } catch {
@@ -177,26 +152,32 @@ export const CommentsPage: React.FC = () => {
   const [adminNotePromptId, setAdminNotePromptId] = useState<string | null>(null);
   const [adminNoteInput, setAdminNoteInput] = useState('');
 
-  // Persist genuine comments to localStorage
+  // Persist genuine comments to localStorage on any state change
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
-    } catch {
-      // ignore storage errors
-    }
+    persistComments(comments);
   }, [comments]);
 
+  // Synchronize across open browser tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setComments(parsed);
+          }
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // Handle switching to Admin Category:
-  // 1. If no password set yet: Open Set Password modal first!
-  // 2. If password set but locked: Open Unlock Password modal!
-  // 3. If unlocked: Switch directly to admin category!
+  // If already unlocked: switch directly!
+  // If locked on other systems: prompt for master admin password! (Never ask to set password)
   const handleSelectAdminChannel = () => {
-    if (!isPasswordSet) {
-      setIsSetPasswordModalOpen(true);
-      setSetupError(null);
-      setInitialPasswordInput('');
-      setInitialConfirmInput('');
-    } else if (isAdminUnlocked) {
+    if (isAdminUnlocked) {
       setActiveChannel('admin');
       setSelectedFilter('all');
     } else {
@@ -209,59 +190,15 @@ export const CommentsPage: React.FC = () => {
   // Lock Admin session
   const handleLockAdmin = () => {
     setIsAdminUnlocked(false);
-    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    localStorage.removeItem(ADMIN_UNLOCKED_STORAGE_KEY);
     setActiveChannel('user');
   };
 
-  // 1. First-time: Set Admin Master Password with 100-layer encryption
-  const handleSetInitialPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!initialPasswordInput) {
-      setSetupError('Please enter a password.');
-      return;
-    }
-    if (initialPasswordInput.length < 4) {
-      setSetupError('Password must be at least 4 characters long.');
-      return;
-    }
-    if (initialPasswordInput !== initialConfirmInput) {
-      setSetupError('Passwords do not match. Please re-enter.');
-      return;
-    }
-
-    setIsSettingPassword(true);
-    setSetupError(null);
-    setSetupProgress(0);
-
-    try {
-      const res = await setInitialAdminPassword(initialPasswordInput, (layer) => {
-        setSetupProgress(layer);
-      });
-
-      if (res.success) {
-        setIsPasswordSet(true);
-        setIsAdminUnlocked(true);
-        sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
-        setIsSetPasswordModalOpen(false);
-        setInitialPasswordInput('');
-        setInitialConfirmInput('');
-        setActiveChannel('admin');
-        setSelectedFilter('all');
-      } else {
-        setSetupError(res.message);
-      }
-    } catch {
-      setSetupError('Failed to initialize 100-layer cryptographic encryption.');
-    } finally {
-      setIsSettingPassword(false);
-    }
-  };
-
-  // 2. Unlock Admin Category with 100-layer verification
+  // Unlock Admin Category with 100-layer cryptographic check
   const handleUnlockAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!unlockPasswordInput.trim()) {
-      setUnlockError('Please enter your admin password.');
+      setUnlockError('Please enter the admin password.');
       return;
     }
 
@@ -276,13 +213,13 @@ export const CommentsPage: React.FC = () => {
 
       if (isValid) {
         setIsAdminUnlocked(true);
-        sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+        localStorage.setItem(ADMIN_UNLOCKED_STORAGE_KEY, 'true');
         setIsUnlockModalOpen(false);
         setUnlockPasswordInput('');
         setActiveChannel('admin');
         setSelectedFilter('all');
       } else {
-        setUnlockError('Access Denied: Incorrect password. 100-layer cryptographic check failed.');
+        setUnlockError('Access Denied: Incorrect password. 100-layer cryptographic verification failed.');
       }
     } catch {
       setUnlockError('Cryptographic verification failed. Please try again.');
@@ -291,7 +228,7 @@ export const CommentsPage: React.FC = () => {
     }
   };
 
-  // 3. Change Admin Password (Strictly requires current password)
+  // Change Admin Password (Strictly requires current password)
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPwdInput) {
@@ -364,7 +301,10 @@ export const CommentsPage: React.FC = () => {
       isAccepted: false,
     };
 
-    setComments((prev) => [newComment, ...prev]);
+    const updated = [newComment, ...comments];
+    setComments(updated);
+    persistComments(updated);
+
     setNewTitle('');
     setNewContent('');
     setIsSubmitting(false);
@@ -405,96 +345,99 @@ export const CommentsPage: React.FC = () => {
       adminNote: 'Official Learno Platform Announcement',
     };
 
-    setComments((prev) => [adminAnnouncement, ...prev]);
+    const updated = [adminAnnouncement, ...comments];
+    setComments(updated);
+    persistComments(updated);
+
     setAdminTitle('');
     setAdminContent('');
     setSubmitSuccess(true);
     setTimeout(() => setSubmitSuccess(false), 3000);
   };
 
-  // Toggle Accept status on comment (Only Admin with password can perform this)
+  // Toggle Accept status on comment:
+  // Strictly for Admin only. When Admin accepts on their system, it does NOT prompt for password!
   const handleToggleAccept = (id: string) => {
     if (!isAdminUnlocked) {
-      handleSelectAdminChannel();
+      // Non-admins cannot accept; no password modal is prompted here
       return;
     }
 
-    setComments((prev) =>
-      prev.map((c) => {
-        if (c.id === id) {
-          const nextAccepted = !c.isAccepted;
-          const dateStr = getCurrentDate();
-          return {
-            ...c,
-            isAccepted: nextAccepted,
-            acceptedAt: nextAccepted ? `Verified by Admin on ${dateStr}` : undefined,
-            adminNote: nextAccepted ? c.adminNote || 'Verified and approved by Administrator.' : undefined,
-          };
-        }
-        return c;
-      })
-    );
+    const updated = comments.map((c) => {
+      if (c.id === id) {
+        const nextAccepted = !c.isAccepted;
+        const dateStr = getCurrentDate();
+        return {
+          ...c,
+          isAccepted: nextAccepted,
+          acceptedAt: nextAccepted ? `Verified by Admin on ${dateStr}` : undefined,
+          adminNote: nextAccepted ? c.adminNote || 'Verified and approved by Administrator.' : undefined,
+        };
+      }
+      return c;
+    });
+
+    setComments(updated);
+    persistComments(updated);
   };
 
   // Save Admin Note
   const handleSaveAdminNote = (id: string) => {
     if (!isAdminUnlocked) return;
-    setComments((prev) =>
-      prev.map((c) => {
-        if (c.id === id) {
-          return {
-            ...c,
-            adminNote: adminNoteInput.trim() || c.adminNote,
-          };
-        }
-        return c;
-      })
-    );
+    const updated = comments.map((c) => {
+      if (c.id === id) {
+        return {
+          ...c,
+          adminNote: adminNoteInput.trim() || c.adminNote,
+        };
+      }
+      return c;
+    });
+    setComments(updated);
+    persistComments(updated);
     setAdminNotePromptId(null);
     setAdminNoteInput('');
   };
 
-  // Like comment
+  // Like comment with persistent storage
   const handleLike = (id: string) => {
-    setComments((prev) =>
-      prev.map((c) => {
-        if (c.id === id) {
-          const liked = c.likedByMe;
-          return {
-            ...c,
-            likes: liked ? c.likes - 1 : c.likes + 1,
-            likedByMe: !liked,
-          };
-        }
-        return c;
-      })
-    );
+    const updated = comments.map((c) => {
+      if (c.id === id) {
+        const liked = c.likedByMe;
+        return {
+          ...c,
+          likes: liked ? Math.max(0, c.likes - 1) : c.likes + 1,
+          likedByMe: !liked,
+        };
+      }
+      return c;
+    });
+    setComments(updated);
+    persistComments(updated);
   };
 
   // Delete comment (Admin only)
   const handleDelete = (id: string) => {
     if (!isAdminUnlocked) return;
     if (window.confirm('Delete this message permanently?')) {
-      setComments((prev) => prev.filter((c) => c.id !== id));
+      const updated = comments.filter((c) => c.id !== id);
+      setComments(updated);
+      persistComments(updated);
     }
   };
 
   // Filter comments for current channel or Learno Family announcements
   const filteredComments = comments.filter((item) => {
-    // If filter is explicitly 'announcements': show announcements by Learno family
     if (selectedFilter === 'announcements') {
       if (item.channel !== 'admin') return false;
     } else if (activeChannel === 'admin') {
-      // Admin channel: show admin announcements
       if (item.channel !== 'admin') return false;
     } else {
-      // User channel:
       if (selectedFilter === 'accepted') {
         if (!item.isAccepted || item.channel !== 'user') return false;
       } else if (selectedFilter === 'experience' || selectedFilter === 'problem') {
         if (item.category !== selectedFilter || item.channel !== 'user') return false;
       }
-      // When selectedFilter === 'all': show user comments AND announcements by Learno family
     }
 
     const matchesSearch =
@@ -528,7 +471,7 @@ export const CommentsPage: React.FC = () => {
               ) : (
                 <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-white/5 border border-white/10 text-neutral-400 flex items-center gap-1">
                   <Lock className="w-3 h-3 text-neutral-400" />
-                  {isPasswordSet ? 'Admin Protected (100-Layer Shield)' : 'Admin Password Not Set Yet'}
+                  Admin Protected (100-Layer Shield)
                 </span>
               )}
             </div>
@@ -540,7 +483,7 @@ export const CommentsPage: React.FC = () => {
             </p>
           </div>
 
-          {/* TWO MAIN MODES: USER MESSAGES vs ADMIN ANNOUNCEMENTS + PASSWORD CONTROLS */}
+          {/* TWO MAIN MODES: USER MESSAGES vs ADMIN ANNOUNCEMENTS + CONTROLS */}
           <div className="flex flex-wrap items-center gap-2 bg-[#050505] p-1.5 rounded-xl border border-white/10 flex-shrink-0">
             <button
               type="button"
@@ -589,9 +532,9 @@ export const CommentsPage: React.FC = () => {
               </span>
             </button>
 
-            {/* Clear "Change Password" and "Lock" Options */}
-            <div className="flex items-center gap-1.5 pl-1 border-l border-white/10">
-              {isPasswordSet && (
+            {/* Admin-only controls when unlocked */}
+            {isAdminUnlocked && (
+              <div className="flex items-center gap-1.5 pl-1 border-l border-white/10">
                 <button
                   type="button"
                   onClick={() => {
@@ -603,14 +546,12 @@ export const CommentsPage: React.FC = () => {
                     setConfirmPwdInput('');
                   }}
                   className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-amber-300 border border-white/10 text-[10px] font-mono font-bold transition-colors flex items-center gap-1"
-                  title="Change Admin Password (Takes current password first)"
+                  title="Change Admin Password (Requires current password first)"
                 >
                   <KeyRound className="w-3 h-3 text-amber-400" />
                   <span>Change Password</span>
                 </button>
-              )}
 
-              {isAdminUnlocked && (
                 <button
                   type="button"
                   onClick={handleLockAdmin}
@@ -620,8 +561,8 @@ export const CommentsPage: React.FC = () => {
                   <Lock className="w-3 h-3" />
                   <span>LOCK</span>
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -839,7 +780,7 @@ export const CommentsPage: React.FC = () => {
               </form>
             </div>
           ) : (
-            /* Protected notice */
+            /* Protected notice: Only asks for admin password; never prompts to set one */
             <div className="bg-[#0A0D14]/90 border border-amber-500/20 rounded-2xl p-5 shadow-card flex items-start gap-3.5">
               <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0 mt-0.5">
                 <Lock className="w-4 h-4" />
@@ -866,7 +807,7 @@ export const CommentsPage: React.FC = () => {
                     className="px-3.5 py-2 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 text-amber-300 font-mono text-xs font-bold rounded-lg transition-colors flex items-center gap-2"
                   >
                     <KeyRound className="w-3.5 h-3.5" />
-                    <span>{isPasswordSet ? 'Unlock Admin Category' : 'Set Admin Password First'}</span>
+                    <span>Unlock Admin Category</span>
                   </button>
                 </div>
               </div>
@@ -877,7 +818,7 @@ export const CommentsPage: React.FC = () => {
 
       {/* FILTER BAR & SEARCH */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 font-mono text-xs">
-        {/* Category Filter Pills (Only for User Messages) */}
+        {/* Category Filter Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           <button
             type="button"
@@ -989,7 +930,7 @@ export const CommentsPage: React.FC = () => {
                   : 'border-white/10'
               }`}
             >
-              {/* Card Header: Author info, Date & Time (Both User & Admin mode) */}
+              {/* Card Header: Author info, Date & Time */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#050505] border border-white/10 flex items-center justify-center text-xl flex-shrink-0">
@@ -1094,61 +1035,63 @@ export const CommentsPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Card Footer: ACCEPT Option with Required Text + Upvote + Delete */}
+              {/* Card Footer: ACCEPT Option for Admin only, Read-Only Status for Users */}
               <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-xs">
-                {/* Accept Box with Required Notice */}
                 {item.channel === 'user' ? (
                   <div className="flex flex-wrap items-center gap-2.5">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleAccept(item.id)}
-                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        item.isAccepted
-                          ? 'bg-[#00FF66]/20 border-[#00FF66] text-[#00FF66] hover:bg-rose-500/20 hover:border-rose-500 hover:text-rose-400'
-                          : isAdminUnlocked
-                          ? 'bg-white/10 hover:bg-[#00FF66] hover:text-black border-white/20 text-neutral-300'
-                          : 'bg-white/5 border-white/10 text-neutral-400 hover:border-amber-400/50'
-                      }`}
-                      title={
-                        isAdminUnlocked
-                          ? item.isAccepted
-                            ? 'Revoke accepted status'
-                            : 'Accept this student message'
-                          : 'Admin password required to accept message'
-                      }
-                    >
-                      {item.isAccepted ? (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#00FF66]" />
-                      ) : (
-                        <Lock className="w-3.5 h-3.5 text-neutral-400" />
-                      )}
-                      <span>{item.isAccepted ? 'ACCEPTED' : 'ACCEPT'}</span>
-                    </button>
+                    {/* 1. ADMIN SYSTEM: 1-Click Accept Toggle (NO password prompt) */}
+                    {isAdminUnlocked ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleAccept(item.id)}
+                          className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            item.isAccepted
+                              ? 'bg-[#00FF66]/20 border-[#00FF66] text-[#00FF66] hover:bg-rose-500/20 hover:border-rose-500 hover:text-rose-400'
+                              : 'bg-white/10 hover:bg-[#00FF66] hover:text-black border-white/20 text-neutral-300'
+                          }`}
+                          title={
+                            item.isAccepted
+                              ? 'Click to revoke accepted status'
+                              : 'Click to accept this message (Instant 1-click)'
+                          }
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{item.isAccepted ? 'ACCEPTED' : 'ACCEPT'}</span>
+                        </button>
 
-                    {/* REQUIRED EXPLICIT TEXT ON EVERY COMMENT */}
-                    <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono">
-                      <span className="text-neutral-400 font-semibold">
-                        Only admin can accept your message
-                      </span>
-                      {item.isAccepted && (
-                        <span className="text-[#00FF66] font-bold">
-                          • Verified
+                        <span className="text-[11px] text-[#00FF66] font-bold">
+                          {item.isAccepted ? '• Verified by You' : '• Ready to Accept'}
                         </span>
-                      )}
-                    </div>
 
-                    {/* Edit Admin Note for Admin */}
-                    {isAdminUnlocked && item.isAccepted && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAdminNotePromptId(item.id);
-                          setAdminNoteInput(item.adminNote || '');
-                        }}
-                        className="text-[10px] text-amber-400 hover:underline ml-1"
-                      >
-                        [ Edit Admin Note ]
-                      </button>
+                        {item.isAccepted && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAdminNotePromptId(item.id);
+                              setAdminNoteInput(item.adminNote || '');
+                            }}
+                            className="text-[10px] text-amber-400 hover:underline ml-1"
+                          >
+                            [ Edit Admin Note ]
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      /* 2. REGULAR USER / OTHER SYSTEM: NO interactive accept button */
+                      <div className="flex items-center gap-2 text-[11px] font-mono">
+                        {item.isAccepted ? (
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#00FF66]/10 border border-[#00FF66]/30 text-[#00FF66] font-bold">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#00FF66]" />
+                            <span>✓ Accepted by Admin (Shivansh Giri)</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-neutral-400">
+                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-600" />
+                            <span>Only admin can accept your message</span>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 ) : (
@@ -1224,124 +1167,7 @@ export const CommentsPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 1. INITIAL ADMIN SETUP MODAL: FIRST YOU SET THE PASSWORD                  */}
-      {/* ========================================================================= */}
-      {isSetPasswordModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="bg-[#0A0D14] border border-[#00FF66]/40 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#00FF66]/20 border border-[#00FF66]/40 text-[#00FF66] flex items-center justify-center">
-                  <KeyRound className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#00FF66] font-bold">
-                    INITIAL ADMIN SETUP
-                  </span>
-                  <h3 className="text-base font-display font-bold text-white">
-                    Set Admin Password First
-                  </h3>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsSetPasswordModalOpen(false)}
-                className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <p className="text-xs text-neutral-300 font-mono leading-relaxed">
-              Create your secret master password. It will be encrypted through <strong>100 sequential cryptographic layers</strong>. Once set, only entering this password can unlock the admin category.
-            </p>
-
-            <form onSubmit={handleSetInitialPassword} className="space-y-3.5 font-mono text-xs">
-              <div>
-                <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1">
-                  1. Set Your Admin Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showInitialPwd ? 'text' : 'password'}
-                    required
-                    value={initialPasswordInput}
-                    onChange={(e) => setInitialPasswordInput(e.target.value)}
-                    placeholder="Enter your secret password..."
-                    autoFocus
-                    className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-white/15 bg-[#050505] text-white focus:border-[#00FF66] outline-none text-sm transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowInitialPwd(!showInitialPwd)}
-                    className="absolute right-3 top-3 text-neutral-400 hover:text-white"
-                  >
-                    {showInitialPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1">
-                  2. Confirm Admin Password
-                </label>
-                <input
-                  type={showInitialPwd ? 'text' : 'password'}
-                  required
-                  value={initialConfirmInput}
-                  onChange={(e) => setInitialConfirmInput(e.target.value)}
-                  placeholder="Re-enter password to confirm..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/15 bg-[#050505] text-white focus:border-[#00FF66] outline-none text-sm transition-all"
-                />
-              </div>
-
-              {/* Progress Bar when hashing 100 layers */}
-              {isSettingPassword && (
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[10px] text-[#00FF66]">
-                    <span>Encrypting 100 Cryptographic Layers:</span>
-                    <span>Layer {setupProgress} / 100</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden border border-[#00FF66]/30">
-                    <div
-                      className="h-full bg-[#00FF66] transition-all duration-75"
-                      style={{ width: `${Math.max(5, setupProgress)}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {setupError && (
-                <div className="p-2.5 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                  <span>{setupError}</span>
-                </div>
-              )}
-
-              <div className="pt-2 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setIsSetPasswordModalOpen(false)}
-                  className="px-4 py-2 bg-white/5 hover:bg-white/10 text-neutral-400 rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSettingPassword || !initialPasswordInput || !initialConfirmInput}
-                  className="px-5 py-2.5 bg-[#00FF66] hover:bg-[#00FF66]/90 disabled:opacity-40 text-black font-bold rounded-xl text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(0,255,102,0.3)]"
-                >
-                  <KeyRound className="w-3.5 h-3.5" />
-                  <span>{isSettingPassword ? 'ENCRYPTING 100 LAYERS...' : 'SET PASSWORD & UNLOCK'}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* 2. UNLOCK ADMIN MODAL: TAKES THE PASSWORD TO ENTER ADMIN CATEGORY          */}
+      {/* UNLOCK ADMIN MODAL: ONLY PROMPTS FOR THE PASSWORD CONFIGURED BY ADMIN     */}
       {/* ========================================================================= */}
       {isUnlockModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
@@ -1378,7 +1204,7 @@ export const CommentsPage: React.FC = () => {
               <div className="space-y-0.5">
                 <span className="text-amber-400 font-bold">100-Layer Verification Shield:</span>
                 <p className="text-[10px] text-neutral-400 leading-tight">
-                  Enter your admin password. It will be verified against 100 sequential SHA-256 cryptographic layers.
+                  Enter the administrator master password. It is verified against 100 sequential SHA-256 cryptographic layers.
                 </p>
               </div>
             </div>
@@ -1454,7 +1280,7 @@ export const CommentsPage: React.FC = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* 3. CHANGE PASSWORD MODAL: REQUIRES CURRENT PASSWORD FIRST                 */}
+      {/* CHANGE PASSWORD MODAL: REQUIRES CURRENT PASSWORD FIRST                     */}
       {/* ========================================================================= */}
       {isChangePasswordModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
