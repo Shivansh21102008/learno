@@ -87,7 +87,7 @@ export interface User {
   createdAt: string;
 }
 
-export type ActiveTab = 'home' | 'dashboard' | 'tests' | 'achievements' | 'profile' | 'comments';
+export type ActiveTab = 'home' | 'dashboard' | 'tests' | 'achievements' | 'profile';
 
 export type CommentCategory = 'experience' | 'problem' | 'question' | 'suggestion';
 export type CommentChannel = 'user' | 'admin';
