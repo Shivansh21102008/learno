@@ -13,7 +13,6 @@ import {
   Layers,
   BookOpen,
   HelpCircle,
-  Bot,
   Terminal,
 } from 'lucide-react';
 import { LearnoLogo } from './LearnoLogo';
@@ -23,8 +22,6 @@ interface NavbarProps {
   setActiveTab: (tab: ActiveTab) => void;
   onOpenClassModal: () => void;
   onOpenInstructions: () => void;
-  onToggleAiTutor: () => void;
-  isAiTutorOpen?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -32,8 +29,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   onOpenClassModal,
   onOpenInstructions,
-  onToggleAiTutor,
-  isAiTutorOpen = false,
 }) => {
   const { user, isAuthenticated, logout, resetToDemo } = useAuth();
   const { stats } = useCurriculum();

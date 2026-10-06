@@ -10,7 +10,6 @@ import {
   Flame,
   Layers,
   BookOpen,
-  Bot,
   Sparkles,
   Mic,
 } from 'lucide-react';
@@ -19,14 +18,12 @@ interface HomePageProps {
   setActiveTab: (tab: ActiveTab) => void;
   onOpenClassModal?: () => void;
   onOpenInstructions?: () => void;
-  onOpenAiTutor?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
   setActiveTab,
   onOpenClassModal,
   onOpenInstructions,
-  onOpenAiTutor,
 }) => {
   const { user, isAuthenticated, openAuthModal } = useAuth();
   const [previewClass, setPreviewClass] = useState<StudentClass>(user.class || 'Class 8');
@@ -169,7 +166,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {/* Card 1: 200 Problems Rig */}
           <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_30px_rgba(0,255,102,0.15)] transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
@@ -208,7 +205,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </span>
               </div>
               <p className="text-xs text-neutral-400 font-sans leading-relaxed">
-                Interactive voice examiner with concept tutor support and full executive English fluency scoring.
+                Interactive voice examiner with instant diagnostic evaluation and full executive English fluency scoring.
               </p>
             </div>
             <button
@@ -242,31 +239,6 @@ export const HomePage: React.FC<HomePageProps> = ({
             >
               <span>[ TAKE EXAM ]</span>
               <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Card 4: 24/7 Neural AI Tutor */}
-          <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_30px_rgba(0,255,102,0.15)] transition-all duration-300 flex flex-col justify-between group">
-            <div className="space-y-3">
-              <div className="w-12 h-12 rounded-xl bg-black border border-white/15 text-white flex items-center justify-center font-bold text-lg group-hover:scale-105 group-hover:border-[#00FF66] transition-all">
-                🤖
-              </div>
-              <div className="flex items-center justify-between">
-                <h3 className="font-mono text-sm font-bold text-white uppercase tracking-wider">Neural Tutor</h3>
-                <span className="px-2 py-0.5 rounded font-mono bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/30 text-[9px] font-bold">
-                  24/7 LIVE
-                </span>
-              </div>
-              <p className="text-xs text-neutral-400 font-sans leading-relaxed">
-                Instant doubt clearing powered by advanced academic LLMs. Audio speech synthesis and formula rendering.
-              </p>
-            </div>
-            <button
-              onClick={onOpenAiTutor}
-              className="mt-5 w-full py-2.5 px-4 rounded-xl bg-[#00FF66] hover:bg-[#2eff7d] text-black font-mono font-black text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(0,255,102,0.4)] transition-all flex items-center justify-center gap-1.5"
-            >
-              <span>[ OPEN AI COPILOT ]</span>
-              <Bot className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

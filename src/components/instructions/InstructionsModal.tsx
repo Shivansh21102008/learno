@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   FileCheck2,
   Trophy,
-  Bot,
   Sparkles,
   ArrowRight,
   Layers,
@@ -23,7 +22,6 @@ interface InstructionsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (tab: ActiveTab) => void;
-  onOpenAiTutor: () => void;
   onOpenClassModal: () => void;
 }
 
@@ -45,7 +43,6 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
   isOpen,
   onClose,
   onNavigate,
-  onOpenAiTutor,
   onOpenClassModal,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -163,30 +160,6 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
       onAction: () => {
         onClose();
         onNavigate('dashboard');
-      },
-    },
-    {
-      id: 'ai-tutor',
-      category: 'ai',
-      title: 'Adjustable AI Tutor Right-Sidebar Drawer',
-      location: 'Top Navbar -> "AI Tutor" Button',
-      icon: <Bot className="w-5 h-5 text-glitch-green" />,
-      badge: '24/7 Academic Study Assistant',
-      summary: 'A resizable, adjustable educational companion on the right edge of your screen that answers any doubt in school subjects or Learno platform features.',
-      whatHappensWhenClicked: [
-        'Slides in smoothly as a dedicated study sidebar on the right side of the screen.',
-        'Adjustable Modes: Use it as a convenient sidebar drawer OR click the Maximize button to expand it into a Full-Page interactive learning studio!',
-        'Ask anything: Step-by-step Math problem solving, Science explanations, English grammar rules, Coding snippets, Hindi & Sanskrit vyakaran, or platform help.',
-        'Features voice read-aloud (SpeechSynthesis), microphone speech recognition, quick suggestion chips, and instant copy buttons.',
-        'Close anytime with the "X" button or by clicking outside.',
-      ],
-      tips: [
-        'Click the expand icon in the top header of the AI Tutor to study in full-page mode when reviewing long explanations!',
-      ],
-      actionLabel: 'Open AI Tutor Now',
-      onAction: () => {
-        onClose();
-        onOpenAiTutor();
       },
     },
     {
@@ -316,7 +289,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
               { id: 'all', label: 'All Features' },
               { id: 'core', label: 'Core & Home' },
               { id: 'exam', label: '200 Tests' },
-              { id: 'ai', label: 'AI Viva & Tutor' },
+              { id: 'ai', label: 'AI Viva' },
               { id: 'profile', label: 'Class & Profile' },
             ].map((cat) => (
               <button
@@ -344,20 +317,8 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
                 Complete Guide to the Learno Educational Ecosystem
               </h3>
               <p className="text-xs text-text-secondary leading-relaxed">
-                Learno provides an authentic NCERT/CBSE learning system exclusively for <strong>Classes 5 to 9</strong> across <strong>8 subjects</strong> with 200 sequential chapter tests, AI viva diagnostics, 24/7 AI tutor sidebar, and comprehensive performance telemetry.
+                Learno provides an authentic NCERT/CBSE learning system exclusively for <strong>Classes 5 to 9</strong> across <strong>8 subjects</strong> with 200 sequential chapter tests, AI viva diagnostics, and comprehensive performance telemetry.
               </p>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <button
-                onClick={() => {
-                  onClose();
-                  onOpenAiTutor();
-                }}
-                className="px-3.5 p-2.5 min-h-[44px] rounded-xl bg-glitch-green hover:brightness-110 text-glitch-ink text-xs font-bold shadow-[0_0_12px_rgba(0,255,102,0.25)] transition-all flex items-center gap-1.5"
-              >
-                <Bot className="w-3.5 h-3.5" />
-                Ask AI Tutor
-              </button>
             </div>
           </div>
 

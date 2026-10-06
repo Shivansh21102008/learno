@@ -18,9 +18,8 @@ import { AuthGateScreen } from './components/auth/AuthGateScreen';
 import { OnboardingModal } from './components/onboarding/OnboardingModal';
 import { ChangeClassModal } from './components/profile/ChangeClassModal';
 import { InstructionsModal } from './components/instructions/InstructionsModal';
-import { AITutorSidebar } from './components/ai/AITutorSidebar';
 import { CinematicIntroScreen } from './components/intro/CinematicIntroScreen';
-import { Trophy, X, Bot } from 'lucide-react';
+import { Trophy, X } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -29,7 +28,6 @@ const MainLayout: React.FC = () => {
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>('All');
   const [isClassModalOpen, setIsClassModalOpen] = useState(false);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
-  const [isAiTutorOpen, setIsAiTutorOpen] = useState(false);
 
   // When user authenticates, ensure active tab is 'home'
   React.useEffect(() => {
@@ -97,8 +95,6 @@ const MainLayout: React.FC = () => {
         setActiveTab={setActiveTab}
         onOpenClassModal={() => setIsClassModalOpen(true)}
         onOpenInstructions={() => setIsInstructionsOpen(true)}
-        onToggleAiTutor={() => setIsAiTutorOpen((prev) => !prev)}
-        isAiTutorOpen={isAiTutorOpen}
       />
 
       {/* Main View Port */}
@@ -108,7 +104,6 @@ const MainLayout: React.FC = () => {
             setActiveTab={setActiveTab}
             onOpenClassModal={() => setIsClassModalOpen(true)}
             onOpenInstructions={() => setIsInstructionsOpen(true)}
-            onOpenAiTutor={() => setIsAiTutorOpen(true)}
           />
         )}
 
@@ -157,39 +152,11 @@ const MainLayout: React.FC = () => {
           setActiveTab(tab);
           setIsInstructionsOpen(false);
         }}
-        onOpenAiTutor={() => {
-          setIsInstructionsOpen(false);
-          setIsAiTutorOpen(true);
-        }}
         onOpenClassModal={() => {
           setIsInstructionsOpen(false);
           setIsClassModalOpen(true);
         }}
       />
-
-      {/* 24/7 Adjustable AI Academic Tutor Sidebar */}
-      <AITutorSidebar
-        isOpen={isAiTutorOpen}
-        onClose={() => setIsAiTutorOpen(false)}
-      />
-
-      {/* Floating Right-Edge Quick Trigger for AI Tutor (Normal & Jarvis Mode) */}
-      {!isAiTutorOpen && (
-        <button
-          onClick={() => setIsAiTutorOpen(true)}
-          className="flex fixed right-0 top-1/2 -translate-y-1/2 z-30 bg-[#0A0D14] hover:bg-[#00FF66] text-white hover:text-black py-3 px-2 rounded-l-xl shadow-2xl flex-col items-center gap-2 hover:px-2.5 transition-all duration-200 border-y border-l border-white/10 hover:border-[#00FF66] group font-mono"
-          title="Open AI Tutor (Normal & Jarvis Mode)"
-          aria-label="Open AI Tutor"
-        >
-          <div className="w-7 h-7 rounded-lg bg-white/5 group-hover:bg-black/10 flex items-center justify-center transition-transform">
-            <Bot className="w-4 h-4 text-[#00FF66] group-hover:text-black" />
-          </div>
-          <span className="text-[9px] font-bold tracking-widest uppercase [writing-mode:vertical-rl] rotate-180">
-            [ AI TUTOR ]
-          </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] animate-pulse shadow-[0_0_6px_#00FF66]" />
-        </button>
-      )}
 
 
       {/* Test Result Screen Modal */}
