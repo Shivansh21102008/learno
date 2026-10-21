@@ -10,6 +10,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { TestsPage } from './pages/TestsPage';
 import { AchievementsPage } from './pages/AchievementsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { PDFExamPage } from './pages/PDFExamPage';
 import { TestScreen } from './components/test/TestScreen';
 import { TestResultModal } from './components/test/TestResultModal';
 import { ReviewAnswersModal } from './components/test/ReviewAnswersModal';
@@ -130,6 +131,10 @@ const MainLayout: React.FC = () => {
 
         {activeTab === 'profile' && (
           <ProfilePage onOpenClassModal={() => setIsClassModalOpen(true)} />
+        )}
+
+        {activeTab === 'pdf-exam' && (
+          <PDFExamPage onBackToHome={() => setActiveTab('home')} />
         )}
       </main>
 

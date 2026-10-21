@@ -14,6 +14,7 @@ import {
   BookOpen,
   HelpCircle,
   Terminal,
+  FileText,
 } from 'lucide-react';
 import { LearnoLogo } from './LearnoLogo';
 
@@ -50,6 +51,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'home', label: 'Home', icon: <BookOpen className="w-3.5 h-3.5" /> },
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-3.5 h-3.5" /> },
     { id: 'tests', label: 'Tests', icon: <FileCheck2 className="w-3.5 h-3.5" /> },
+    { id: 'pdf-exam', label: 'PDF Exam', icon: <FileText className="w-3.5 h-3.5" /> },
     { id: 'achievements', label: 'Achievements', icon: <Trophy className="w-3.5 h-3.5" /> },
   ];
 
@@ -183,6 +185,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                         >
                           <Layers className="w-3.5 h-3.5 text-[#00FF66]" />
                           Switch Class (5–9)
+                        </button>
+                        <button
+                          onClick={() => {
+                            setActiveTab('pdf-exam');
+                            setDropdownOpen(false);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-4 py-2 font-mono text-xs text-neutral-300 hover:text-white hover:bg-white/[0.05] transition-colors"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-[#00FF66]" />
+                          AI PDF Exam Generator
                         </button>
                         <button
                           onClick={() => {

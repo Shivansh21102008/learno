@@ -12,6 +12,7 @@ import {
   BookOpen,
   Sparkles,
   Mic,
+  FileText,
 } from 'lucide-react';
 
 interface HomePageProps {
@@ -166,7 +167,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Card 1: 200 Problems Rig */}
           <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_30px_rgba(0,255,102,0.15)] transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
@@ -239,6 +240,31 @@ export const HomePage: React.FC<HomePageProps> = ({
             >
               <span>[ TAKE EXAM ]</span>
               <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Card 4: AI PDF Exam Generator */}
+          <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_30px_rgba(0,255,102,0.15)] transition-all duration-300 flex flex-col justify-between group">
+            <div className="space-y-3">
+              <div className="w-12 h-12 rounded-xl bg-black border border-white/15 text-[#00FF66] flex items-center justify-center font-bold text-lg group-hover:scale-105 group-hover:border-[#00FF66] transition-all">
+                <FileText className="w-6 h-6" />
+              </div>
+              <div className="flex items-center justify-between">
+                <h3 className="font-mono text-sm font-bold text-white uppercase tracking-wider">PDF Exam Rig</h3>
+                <span className="px-2 py-0.5 rounded font-mono bg-emerald-500/10 text-[#00FF66] border border-[#00FF66]/30 text-[9px] font-bold">
+                  AI SYNTHESIZER
+                </span>
+              </div>
+              <p className="text-xs text-neutral-400 font-sans leading-relaxed">
+                Upload your school notes, sample papers, or study PDFs. AI generates customized interactive exams instantly.
+              </p>
+            </div>
+            <button
+              onClick={() => setActiveTab('pdf-exam')}
+              className="mt-5 w-full py-2.5 px-4 rounded-xl bg-white/[0.04] hover:bg-[#00FF66] text-neutral-200 hover:text-black font-mono font-bold text-xs uppercase tracking-wider transition-all border border-white/15 hover:border-[#00FF66] flex items-center justify-center gap-1.5"
+            >
+              <span>[ UPLOAD PDF ]</span>
+              <FileText className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

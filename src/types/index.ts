@@ -87,7 +87,38 @@ export interface User {
   createdAt: string;
 }
 
-export type ActiveTab = 'home' | 'dashboard' | 'tests' | 'achievements' | 'profile';
+export type ActiveTab = 'home' | 'dashboard' | 'tests' | 'achievements' | 'profile' | 'pdf-exam';
+
+export interface PDFQuizQuestion {
+  id: string;
+  question: string;
+  options: [string, string, string, string]; // 4 options
+  correctAnswer: number; // 0..3
+  explanation: string;
+  topic?: string;
+}
+
+export interface PDFQuizExam {
+  id: string;
+  title: string;
+  fileName: string;
+  fileSize: number;
+  extractedTextLength: number;
+  questions: PDFQuizQuestion[];
+  createdAt: string;
+  durationMinutes: number;
+}
+
+export interface PDFQuizResult {
+  examId: string;
+  title: string;
+  score: number;
+  totalQuestions: number;
+  accuracy: number;
+  timeTakenSeconds: number;
+  answers: Record<number, number>;
+  completedAt: string;
+}
 
 export type CommentCategory = 'experience' | 'problem' | 'question' | 'suggestion';
 export type CommentChannel = 'user' | 'admin';

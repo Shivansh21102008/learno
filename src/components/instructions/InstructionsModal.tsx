@@ -16,6 +16,7 @@ import {
   Mic,
   Lightbulb,
   CheckCircle2,
+  FileText,
 } from 'lucide-react';
 
 interface InstructionsModalProps {
@@ -160,6 +161,29 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
       onAction: () => {
         onClose();
         onNavigate('dashboard');
+      },
+    },
+    {
+      id: 'pdf-exam',
+      category: 'exam',
+      title: 'AI PDF Exam & Custom Quiz Generator',
+      location: 'Top Navbar -> "PDF Exam" / Mobile HUD',
+      icon: <FileText className="w-5 h-5 text-glitch-green" />,
+      badge: 'PDF to Dynamic Exam',
+      summary: 'Upload any chapter notes, textbook PDF, or assignment to instantly generate a custom multiple-choice test.',
+      whatHappensWhenClicked: [
+        'Upload your study PDF via drag-and-drop or device file picker.',
+        'File Format Check: Strictly requires .pdf format. Uploading other files triggers a security warning with attempts tracking.',
+        'Content Validation: Verifies that the PDF contains readable study text and questions.',
+        'Instant AI Exam: Synthesizes 5, 10, or 15 multiple-choice questions with 4 options, timer, instant scoring, and in-depth explanations.',
+      ],
+      tips: [
+        'Ensure your PDF has selectable/readable text rather than low-resolution images for the highest quality question formulation.',
+      ],
+      actionLabel: 'Launch PDF Exam Generator',
+      onAction: () => {
+        onClose();
+        onNavigate('pdf-exam');
       },
     },
     {
