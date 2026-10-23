@@ -54,7 +54,7 @@ export const LearnoLogo: React.FC<LearnoLogoProps> = ({
       <div className="flex flex-col text-left justify-center">
         <div className="flex items-center gap-1 leading-none">
           <span className={`${iconSizes.text} font-display tracking-tight text-white uppercase`}>
-            LEARN<span className="text-[#00FF66] drop-shadow-[0_0_12px_rgba(0,255,102,0.7)]">O</span>
+            LEARN<span className="text-[#00FF66] drop-shadow-[0_0_6px_rgba(0,255,102,0.4)]">O</span>
           </span>
           <span className="font-mono text-[9px] text-[#00FF66] border border-[#00FF66]/30 px-1 py-0.5 rounded bg-[#00FF66]/10 ml-0.5 tracking-tighter">
             .AI

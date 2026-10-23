@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCurriculum } from '../context/CurriculumContext';
-import { ActiveTab, AIVivaMode } from '../types';
+import { ActiveTab } from '../types';
 import { SUBJECT_METAS } from '../data/curriculumData';
 import { BadgeIcon } from '../components/common/BadgeIcon';
-import { AIOralExaminerModal } from '../components/ai/AIOralExaminerModal';
 import {
   Flame,
   Target,
@@ -15,9 +14,7 @@ import {
   Eye,
   Play,
   GraduationCap,
-  Bot,
   Sparkles,
-  Volume2,
 } from 'lucide-react';
 
 interface DashboardPageProps {
@@ -33,10 +30,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 }) => {
   const { user } = useAuth();
   const { tests, results, stats, startTest, openReviewAnswers } = useCurriculum();
-
-  // AI Oral Viva Modal States
-  const [isAIVivaModalOpen, setIsAIVivaModalOpen] = useState(false);
-  const [selectedVivaMode, setSelectedVivaMode] = useState<AIVivaMode>('easy');
 
   // Dynamic greeting based on current time
   const hour = new Date().getHours();
@@ -302,135 +295,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
       </div>
 
-      {/* AI Oral Viva & Diagnostic Hub */}
-      <div className="bg-[#0A0D14]/90 border border-white/10 rounded-3xl p-6 sm:p-7 shadow-card space-y-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#00FF66]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#00FF66]/10 text-[#00FF66] flex items-center justify-center border border-[#00FF66]/30 flex-shrink-0">
-              <Bot className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#00FF66]">
-                  NEURAL VOICE CONVERSATION
-                </span>
-                <span className="font-mono px-2 py-0.5 rounded bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]/40 text-[9px] font-bold uppercase">
-                  AI VIVA
-                </span>
-              </div>
-              <h3 className="text-base font-display font-bold text-white mt-0.5">
-                Learno AI Oral Examiner & Diagnostic Viva
-              </h3>
-            </div>
-          </div>
-          <div className="font-mono text-xs text-[#00FF66] flex items-center gap-1.5 self-start sm:self-auto font-medium">
-            <Volume2 className="w-3.5 h-3.5 animate-pulse" />
-            <span>AI Speaks & Evaluates Spoken Accuracy</span>
-          </div>
-        </div>
-
-        <p className="text-xs text-neutral-400 leading-relaxed max-w-4xl">
-          Practice your curriculum via direct oral conversation with the AI examiner. The AI speaks questions aloud, listens to your verbal response, diagnoses reading and writing competencies, and provides real-time model answers.
-        </p>
-
-        {/* 3 Interactive Mode Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-          {/* Easy (10 Chapters) */}
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedVivaMode('easy');
-              setIsAIVivaModalOpen(true);
-            }}
-            className="w-full text-left p-5 rounded-2xl bg-[#050505] hover:bg-[#050505]/80 border border-white/10 hover:border-[#00FF66] transition-all cursor-pointer flex flex-col justify-between group shadow-sm"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="font-mono px-2.5 py-0.5 rounded bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]/30 text-[10px] font-bold uppercase">
-                  EASY // सरल
-                </span>
-                <span className="font-mono text-xs font-bold text-neutral-400">
-                  10 Chapters
-                </span>
-              </div>
-              <h4 className="text-sm font-bold text-white group-hover:text-[#00FF66] transition-colors">
-                Foundational Viva
-              </h4>
-              <p className="text-xs text-neutral-400 mt-1.5 leading-relaxed">
-                Core definitions, factual checks, and everyday conceptual examples.
-              </p>
-            </div>
-            <div className="mt-4 w-full py-2.5 px-3 rounded-xl bg-white/5 group-hover:bg-[#00FF66] group-hover:text-black border border-white/10 group-hover:border-[#00FF66] text-white font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>LAUNCH EASY VIVA</span>
-            </div>
-          </button>
-
-          {/* Intermediate (20 Chapters) */}
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedVivaMode('intermediate');
-              setIsAIVivaModalOpen(true);
-            }}
-            className="w-full text-left p-5 rounded-2xl bg-[#050505] hover:bg-[#050505]/80 border border-white/10 hover:border-amber-400 transition-all cursor-pointer flex flex-col justify-between group shadow-sm"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="font-mono px-2.5 py-0.5 rounded bg-amber-400/20 text-amber-400 border border-amber-400/30 text-[10px] font-bold uppercase">
-                  INTERMEDIATE // मध्यम
-                </span>
-                <span className="font-mono text-xs font-bold text-neutral-400">
-                  20 Chapters
-                </span>
-              </div>
-              <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">
-                Conceptual Competency
-              </h4>
-              <p className="text-xs text-neutral-400 mt-1.5 leading-relaxed">
-                Application questions testing causal reasoning, comparisons, and error debugging.
-              </p>
-            </div>
-            <div className="mt-4 w-full py-2.5 px-3 rounded-xl bg-white/5 group-hover:bg-amber-400 group-hover:text-black border border-white/10 group-hover:border-amber-400 text-white font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>LAUNCH INTERMEDIATE VIVA</span>
-            </div>
-          </button>
-
-          {/* Hard (40 Chapters) */}
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedVivaMode('hard');
-              setIsAIVivaModalOpen(true);
-            }}
-            className="w-full text-left p-5 rounded-2xl bg-[#050505] hover:bg-[#050505]/80 border border-white/10 hover:border-rose-400 transition-all cursor-pointer flex flex-col justify-between group shadow-sm"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="font-mono px-2.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-bold uppercase">
-                  HARD // कठिन
-                </span>
-                <span className="font-mono text-xs font-bold text-neutral-400">
-                  40 Chapters
-                </span>
-              </div>
-              <h4 className="text-sm font-bold text-white group-hover:text-rose-400 transition-colors">
-                Rigorous Mastery
-              </h4>
-              <p className="text-xs text-neutral-400 mt-1.5 leading-relaxed">
-                Challenging theoretical depth, multi-step problem explanations, and academic rigor.
-              </p>
-            </div>
-            <div className="mt-4 w-full py-2.5 px-3 rounded-xl bg-white/5 group-hover:bg-rose-500 group-hover:text-white border border-white/10 group-hover:border-rose-500 text-white font-mono text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>LAUNCH HARD VIVA</span>
-            </div>
-          </button>
-        </div>
-      </div>
-
       {/* Subject-wise Progress & Cards */}
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -582,15 +446,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
         )}
       </div>
-
-      {/* Interactive AI Oral Viva Examiner Modal */}
-      {isAIVivaModalOpen && (
-        <AIOralExaminerModal
-          studentClass={user.class}
-          initialMode={selectedVivaMode}
-          onClose={() => setIsAIVivaModalOpen(false)}
-        />
-      )}
     </div>
   );
 };

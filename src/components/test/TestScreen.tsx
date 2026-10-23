@@ -223,7 +223,7 @@ export const TestScreen: React.FC<TestScreenProps> = ({
             </div>
 
             {/* Question Text */}
-            <h2 className="text-base sm:text-lg font-medium text-white leading-relaxed mb-8">
+            <h2 className="text-base sm:text-lg font-medium text-slate-100 leading-relaxed mb-8">
               {currentQuestion.question}
             </h2>
 
@@ -240,16 +240,16 @@ export const TestScreen: React.FC<TestScreenProps> = ({
                     onClick={() => handleSelectOption(optIdx)}
                     className={`w-full text-left p-3.5 sm:p-4 rounded-xl border transition-all flex items-center justify-between group min-h-[44px] ${
                       isSelected
-                        ? 'border-[#00FF66] bg-[#00FF66]/10 text-white shadow-[0_0_15px_rgba(0,255,102,0.15)] ring-1 ring-[#00FF66]'
-                        : 'border-white/10 bg-[#050505] hover:border-[#00FF66]/50 hover:bg-white/5 text-neutral-200'
+                        ? 'border-emerald-500/80 bg-emerald-950/40 text-emerald-100 shadow-[0_0_12px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/40'
+                        : 'border-white/10 bg-[#0C1017] hover:border-slate-500/40 hover:bg-white/[0.04] text-slate-300'
                     }`}
                   >
                     <div className="flex items-center gap-3.5">
                       <span
                         className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono text-xs font-bold transition-colors ${
                           isSelected
-                            ? 'bg-[#00FF66] text-black shadow-sm'
-                            : 'bg-white/5 text-neutral-400 group-hover:bg-white/10 group-hover:text-white border border-white/10'
+                            ? 'bg-emerald-500 text-black shadow-sm'
+                            : 'bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white border border-white/10'
                         }`}
                       >
                         {optionLabels[optIdx]}

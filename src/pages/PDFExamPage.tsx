@@ -52,8 +52,6 @@ export const PDFExamPage: React.FC<PDFExamPageProps> = ({ onBackToHome }) => {
   const [timeRemainingSeconds, setTimeRemainingSeconds] = useState<number>(600);
   const [examResult, setExamResult] = useState<PDFQuizResult | null>(null);
 
-  // User Settings for generation
-  const [questionCountPref, setQuestionCountPref] = useState<number>(10);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [analyzingProgress, setAnalyzingProgress] = useState<string>('Initializing AI Engine...');
 
@@ -151,12 +149,11 @@ export const PDFExamPage: React.FC<PDFExamPageProps> = ({ onBackToHome }) => {
     setAnalyzingProgress('Analyzing concepts & formulating exam questions...');
     await new Promise((r) => setTimeout(r, 800));
 
-    // Generate Custom Exam Object
+    // Generate Custom Exam Object (Extracts ALL questions without limits)
     const exam = generateExamFromPDFText(
       result.text || '',
       result.fileName || file.name,
-      result.fileSize || file.size,
-      questionCountPref
+      result.fileSize || file.size
     );
 
     // If somehow 0 questions were generated, trigger warning
@@ -259,8 +256,7 @@ export const PDFExamPage: React.FC<PDFExamPageProps> = ({ onBackToHome }) => {
       const exam = generateExamFromPDFText(
         sampleText,
         `Sample_${topicName.replace(/\s+/g, '_')}.pdf`,
-        sampleText.length * 2,
-        questionCountPref
+        sampleText.length * 2
       );
       setActiveExam(exam);
       setCurrentQuestionIndex(0);
@@ -442,31 +438,24 @@ export const PDFExamPage: React.FC<PDFExamPageProps> = ({ onBackToHome }) => {
             </div>
           </div>
 
-          {/* QUESTION COUNT PREFERENCE */}
-          <div className="bg-[#0A0D14]/90 border border-white/10 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-mono text-xs">
-            <div>
-              <span className="text-neutral-400 font-bold uppercase tracking-wider block">
-                Exam Configuration
-              </span>
-              <span className="text-[11px] text-neutral-500">
-                Choose how many multiple choice questions to synthesize from your PDF:
-              </span>
+          {/* UNLIMITED QUESTIONS CONFIGURATION BANNER */}
+          <div className="bg-[#0A0D14]/90 border border-emerald-500/30 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-mono text-xs shadow-lg">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/30 flex-shrink-0">
+                <Sparkles className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <span className="text-emerald-400 font-bold uppercase tracking-wider block text-xs">
+                  ALL QUESTIONS MODE // ZERO QUESTION LIMIT
+                </span>
+                <span className="text-[11px] text-neutral-400 font-sans mt-0.5 block">
+                  All exercise questions, MCQs, and syllabus concepts in your PDF will be extracted and presented in full.
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              {[5, 10, 15].map((cnt) => (
-                <button
-                  key={cnt}
-                  type="button"
-                  onClick={() => setQuestionCountPref(cnt)}
-                  className={`px-3 py-1.5 rounded-lg border font-bold transition-all ${
-                    questionCountPref === cnt
-                      ? 'bg-[#00FF66] text-black border-[#00FF66] shadow-[0_0_10px_rgba(0,255,102,0.3)]'
-                      : 'bg-white/5 border-white/10 text-neutral-300 hover:text-white'
-                  }`}
-                >
-                  {cnt} Questions
-                </button>
-              ))}
+            <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono text-[11px] font-bold self-start sm:self-auto flex items-center gap-1.5 whitespace-nowrap">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>100% COMPLETE COVERAGE</span>
             </div>
           </div>
 
@@ -621,7 +610,7 @@ export const PDFExamPage: React.FC<PDFExamPageProps> = ({ onBackToHome }) => {
 
           {/* Question Palette / Quick Jump Matrix */}
           <div className="bg-[#0A0D14]/90 border border-white/10 rounded-2xl p-3.5 flex flex-wrap items-center gap-2">
-            <span className="font-mono text-[10px] text-neutral-500 uppercase mr-2">
+            <span className="font-mono text-[10px] text-slate-400 uppercase mr-2 tracking-wider">
               JUMP:
             </span>
             {activeExam.questions.map((_, idx) => {
@@ -634,10 +623,10 @@ export const PDFExamPage: React.FC<PDFExamPageProps> = ({ onBackToHome }) => {
                   onClick={() => setCurrentQuestionIndex(idx)}
                   className={`w-7 h-7 rounded-lg font-mono text-xs font-bold transition-all ${
                     isCurrent
-                      ? 'bg-[#00FF66] text-black ring-2 ring-[#00FF66] ring-offset-2 ring-offset-[#0A0D14]'
+                      ? 'bg-emerald-500 text-black ring-2 ring-emerald-400/50'
                       : isAnswered
-                      ? 'bg-[#00FF66]/20 border border-[#00FF66] text-[#00FF66]'
-                      : 'bg-white/5 border border-white/10 text-neutral-400 hover:text-white'
+                      ? 'bg-emerald-950/50 border border-emerald-500/50 text-emerald-300 font-medium'
+                      : 'bg-white/5 border border-white/10 text-slate-400 hover:text-white'
                   }`}
                 >
                   {idx + 1}
@@ -650,22 +639,22 @@ export const PDFExamPage: React.FC<PDFExamPageProps> = ({ onBackToHome }) => {
           {activeExam.questions[currentQuestionIndex] && (
             <div className="bg-[#0A0D14]/90 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-card space-y-6">
               <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                <span className="font-mono text-xs text-[#00FF66] font-bold">
+                <span className="font-mono text-xs text-emerald-400 font-semibold tracking-wider">
                   QUESTION {currentQuestionIndex + 1} OF {activeExam.questions.length}
                 </span>
                 {activeExam.questions[currentQuestionIndex].topic && (
-                  <span className="font-mono text-[10px] uppercase text-neutral-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                  <span className="font-mono text-[10px] uppercase text-slate-400 bg-white/5 px-2.5 py-0.5 rounded border border-white/10">
                     Topic: {activeExam.questions[currentQuestionIndex].topic}
                   </span>
                 )}
               </div>
 
-              {/* Question Statement */}
-              <h3 className="text-base sm:text-xl font-display font-bold text-white leading-relaxed">
+              {/* Question Statement (Softened Contrast for Eye Comfort) */}
+              <h3 className="text-base sm:text-lg font-sans font-medium text-slate-100 leading-relaxed">
                 {activeExam.questions[currentQuestionIndex].question}
               </h3>
 
-              {/* 4 Multiple Choice Options (A, B, C, D) */}
+              {/* 4 Multiple Choice Options (A, B, C, D) with balanced contrast */}
               <div className="space-y-3 pt-2">
                 {activeExam.questions[currentQuestionIndex].options.map((opt, optIdx) => {
                   const isSelected = selectedAnswers[currentQuestionIndex] === optIdx;
@@ -678,15 +667,15 @@ export const PDFExamPage: React.FC<PDFExamPageProps> = ({ onBackToHome }) => {
                       onClick={() => handleSelectOption(currentQuestionIndex, optIdx)}
                       className={`w-full p-4 rounded-2xl border text-left flex items-start gap-3.5 transition-all font-sans text-xs sm:text-sm ${
                         isSelected
-                          ? 'bg-[#00FF66]/15 border-[#00FF66] text-white shadow-[0_0_15px_rgba(0,255,102,0.15)]'
-                          : 'bg-[#050505] border-white/10 hover:border-white/30 text-neutral-300 hover:text-white'
+                          ? 'bg-emerald-950/40 border-emerald-500/70 text-emerald-100 shadow-[0_0_12px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/40'
+                          : 'bg-[#0B0F17] border-white/[0.08] hover:border-slate-500/40 text-slate-300 hover:text-slate-100'
                       }`}
                     >
                       <div
                         className={`w-6 h-6 rounded-lg font-mono text-xs font-bold flex items-center justify-center flex-shrink-0 transition-colors ${
                           isSelected
-                            ? 'bg-[#00FF66] text-black font-black'
-                            : 'bg-white/10 text-neutral-400'
+                            ? 'bg-emerald-500 text-black font-bold'
+                            : 'bg-white/[0.06] text-slate-400 border border-white/10'
                         }`}
                       >
                         {labelLetter}
@@ -703,7 +692,7 @@ export const PDFExamPage: React.FC<PDFExamPageProps> = ({ onBackToHome }) => {
                   type="button"
                   disabled={currentQuestionIndex === 0}
                   onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
-                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 text-neutral-300 font-bold flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 text-slate-300 font-bold flex items-center gap-1.5"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>PREVIOUS</span>
@@ -877,7 +866,7 @@ export const PDFExamPage: React.FC<PDFExamPageProps> = ({ onBackToHome }) => {
                     </span>
                   </div>
 
-                  <h4 className="text-sm sm:text-base font-bold text-white leading-relaxed">
+                  <h4 className="text-sm sm:text-base font-medium text-slate-100 leading-relaxed">
                     {q.question}
                   </h4>
 
@@ -887,11 +876,11 @@ export const PDFExamPage: React.FC<PDFExamPageProps> = ({ onBackToHome }) => {
                       const isOptionCorrect = optIdx === q.correctAnswer;
                       const isOptionChosen = optIdx === studentChoice;
 
-                      let badgeClass = 'bg-[#050505] border-white/10 text-neutral-400';
+                      let badgeClass = 'bg-[#0B0F17] border-white/10 text-slate-400';
                       if (isOptionCorrect) {
-                        badgeClass = 'bg-[#00FF66]/15 border-[#00FF66] text-[#00FF66] font-bold';
+                        badgeClass = 'bg-emerald-950/40 border-emerald-500/60 text-emerald-200 font-medium';
                       } else if (isOptionChosen && !isOptionCorrect) {
-                        badgeClass = 'bg-rose-500/15 border-rose-500 text-rose-300 line-through';
+                        badgeClass = 'bg-rose-950/40 border-rose-500/50 text-rose-300 line-through';
                       }
 
                       return (
@@ -902,18 +891,18 @@ export const PDFExamPage: React.FC<PDFExamPageProps> = ({ onBackToHome }) => {
                           <span className="font-mono font-bold text-[10px]">
                             {['A', 'B', 'C', 'D'][optIdx]}.
                           </span>
-                          <span>{opt}</span>
+                          <span className="leading-relaxed">{opt}</span>
                         </div>
                       );
                     })}
                   </div>
 
                   {/* Detailed PDF Excerpt Explanation */}
-                  <div className="p-3 rounded-xl bg-white/5 border border-white/10 font-mono text-xs text-neutral-300 space-y-1">
-                    <span className="font-bold text-[10px] uppercase text-[#00FF66] block">
+                  <div className="p-3.5 rounded-xl bg-[#090D14] border border-white/10 font-mono text-xs text-slate-300 space-y-1.5">
+                    <span className="font-semibold text-[10px] uppercase text-emerald-400 block tracking-wider">
                       SOURCE EVIDENCE & EXPLANATION:
                     </span>
-                    <p className="text-neutral-300 text-xs leading-relaxed">{q.explanation}</p>
+                    <p className="text-slate-300 text-xs leading-relaxed font-sans">{q.explanation}</p>
                   </div>
                 </div>
               );

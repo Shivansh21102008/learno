@@ -13,7 +13,6 @@ import {
   Layers,
   HelpCircle,
   Clock,
-  Mic,
   Lightbulb,
   CheckCircle2,
   FileText,
@@ -28,7 +27,7 @@ interface InstructionsModalProps {
 
 interface FeatureGuideItem {
   id: string;
-  category: 'core' | 'ai' | 'exam' | 'profile';
+  category: 'core' | 'exam' | 'profile' | 'pdf';
   title: string;
   location: string;
   icon: React.ReactNode;
@@ -85,7 +84,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
       whatHappensWhenClicked: [
         'Displays your overall Accuracy % gauge, total solved tests (out of 200), and current study streak in days.',
         'Displays subject-wise progress bars showing how many tests you have completed in each subject.',
-        'Features the primary launcher for the "Learno AI Viva Hub" oral examiner.',
+        'Features rapid access to your upcoming tests and comprehensive curriculum telemetry.',
       ],
       tips: [
         'Clicking any subject card on the dashboard directly filters the 200 problem tests for that subject.',
@@ -141,31 +140,8 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
       },
     },
     {
-      id: 'ai-viva',
-      category: 'ai',
-      title: 'AI Viva Hub ("Mujhe Nahi Aata" & Professional English)',
-      location: 'Dashboard -> "Start AI Viva Hub"',
-      icon: <Mic className="w-5 h-5 text-glitch-green" />,
-      badge: 'Oral Diagnostic Examiner',
-      summary: 'Interactive verbal examination where the AI teacher talks directly with the student, asks oral questions, evaluates answers, and explains difficult concepts.',
-      whatHappensWhenClicked: [
-        'Select between 3 Difficulty Modes: Easy (10 chapters), Intermediate (20 chapters), or Hard (40 chapters).',
-        'Speak your answer via microphone or type it in. The AI responds with voice speech and real-time evaluation.',
-        '💡 "Mujhe Nahi Aata — AI Samjha Do": If you don\'t know an answer, click this button or say "mujhe nahi aata". The AI speaks out an encouraging explanation, displays a green "Sahi Version" card with real-world examples, and lets you re-try or advance!',
-        'Full Professional English for Communication: For Communication chapters, the AI speaks in high-level executive English and gives a 100% diagnostic report with Spoken Fluency Score and Professional Tone Score.',
-      ],
-      tips: [
-        'Use headphones for the clearest voice speech recognition and audio output.',
-      ],
-      actionLabel: 'Go to Dashboard for AI Viva',
-      onAction: () => {
-        onClose();
-        onNavigate('dashboard');
-      },
-    },
-    {
       id: 'pdf-exam',
-      category: 'exam',
+      category: 'pdf',
       title: 'AI PDF Exam & Custom Quiz Generator',
       location: 'Top Navbar -> "PDF Exam" / Mobile HUD',
       icon: <FileText className="w-5 h-5 text-glitch-green" />,
@@ -294,7 +270,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search features (e.g. viva, tests)..."
+              placeholder="Search features (e.g. pdf, tests, class)..."
               className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-glitch-ink border border-glitch-border font-mono text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-glitch-green focus:border-glitch-green transition-all"
             />
             {searchQuery && (
@@ -313,7 +289,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
               { id: 'all', label: 'All Features' },
               { id: 'core', label: 'Core & Home' },
               { id: 'exam', label: '200 Tests' },
-              { id: 'ai', label: 'AI Viva' },
+              { id: 'pdf', label: 'PDF Exam' },
               { id: 'profile', label: 'Class & Profile' },
             ].map((cat) => (
               <button
@@ -341,7 +317,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
                 Complete Guide to the Learno Educational Ecosystem
               </h3>
               <p className="text-xs text-text-secondary leading-relaxed">
-                Learno provides an authentic NCERT/CBSE learning system exclusively for <strong>Classes 5 to 9</strong> across <strong>8 subjects</strong> with 200 sequential chapter tests, AI viva diagnostics, and comprehensive performance telemetry.
+                Learno provides an authentic NCERT/CBSE learning system exclusively for <strong>Classes 5 to 9</strong> across <strong>8 subjects</strong> with 200 sequential chapter tests, AI PDF exam synthesis, and comprehensive performance telemetry.
               </p>
             </div>
           </div>
@@ -355,7 +331,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({
                   No features match "{searchQuery}"
                 </h4>
                 <p className="text-xs text-text-secondary">
-                  Try searching for keywords like "test", "viva", "class", "profile", or reset category filters.
+                  Try searching for keywords like "test", "pdf", "class", "profile", or reset category filters.
                 </p>
                 <button
                   onClick={() => {

@@ -240,42 +240,44 @@ export const Navbar: React.FC<NavbarProps> = ({
       </header>
 
       {/* Mobile & Tablet Bottom Navigation: Glitch9 Cyber HUD Bar */}
-      <nav aria-label="Mobile navigation" className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#050505]/95 backdrop-blur-xl border-t border-white/10 px-1 sm:px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex justify-around items-center shadow-2xl transition-colors">
-        {navItems.map((item) => {
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center justify-center py-1 px-1 sm:px-2 rounded-lg font-mono text-[8px] sm:text-[9px] uppercase tracking-wider transition-all ${
-                isActive
-                  ? 'text-[#00FF66] font-bold drop-shadow-[0_0_8px_rgba(0,255,102,0.6)]'
-                  : 'text-neutral-500 hover:text-neutral-300'
-              }`}
-            >
-              <div
-                className={`p-1 rounded-md transition-colors ${
+      <nav aria-label="Mobile navigation" className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#050505]/95 backdrop-blur-xl border-t border-white/10 px-0.5 sm:px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl transition-colors">
+        <div className="max-w-md mx-auto flex items-center justify-around w-full">
+          {navItems.map((item) => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`flex flex-col items-center justify-center flex-1 min-w-0 py-1 px-0.5 rounded-lg font-mono text-[8px] sm:text-[9px] uppercase tracking-wider transition-all ${
                   isActive
-                    ? 'bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/30'
-                    : 'text-neutral-500'
+                    ? 'text-[#00FF66] font-bold'
+                    : 'text-neutral-500 hover:text-neutral-300'
                 }`}
               >
-                {item.icon}
-              </div>
-              <span className="mt-0.5 max-w-[50px] sm:max-w-none truncate">{item.label}</span>
-            </button>
-          );
-        })}
-        {/* Mobile Guide Shortcut */}
-        <button
-          onClick={onOpenInstructions}
-          className="flex flex-col items-center justify-center py-1 px-1 sm:px-2 rounded-lg font-mono text-[8px] sm:text-[9px] uppercase tracking-wider text-neutral-500 hover:text-neutral-300 transition-colors"
-        >
-          <div className="p-1 rounded-md text-neutral-500">
-            <Terminal className="w-3.5 h-3.5" />
-          </div>
-          <span className="mt-0.5">Guide</span>
-        </button>
+                <div
+                  className={`p-1 rounded-md transition-colors ${
+                    isActive
+                      ? 'bg-[#00FF66]/10 text-[#00FF66] border border-[#00FF66]/30'
+                      : 'text-neutral-500'
+                  }`}
+                >
+                  {item.icon}
+                </div>
+                <span className="mt-0.5 w-full text-center truncate px-0.5">{item.label}</span>
+              </button>
+            );
+          })}
+          {/* Mobile Guide Shortcut */}
+          <button
+            onClick={onOpenInstructions}
+            className="flex flex-col items-center justify-center flex-1 min-w-0 py-1 px-0.5 rounded-lg font-mono text-[8px] sm:text-[9px] uppercase tracking-wider text-neutral-500 hover:text-neutral-300 transition-colors"
+          >
+            <div className="p-1 rounded-md text-neutral-500">
+              <Terminal className="w-3.5 h-3.5" />
+            </div>
+            <span className="mt-0.5 w-full text-center truncate px-0.5">Guide</span>
+          </button>
+        </div>
       </nav>
     </>
   );

@@ -1082,7 +1082,7 @@ export const CLASS_CHAPTERS: Record<StudentClass, Record<string, string[]>> = {
       "Moderating Panels and Townhalls: Bridging Diverse Perspectives and Managing Q&A",
       "Non-Verbal Mastery: Kinesics, Proxemics, Haptics and Vocalics in Leadership",
       "Diplomatic Communication: Tactful Disagreement, Subtlety and Constructive Critique",
-      "Academic Viva Voce Defense: Presenting Methodologies, Answering Tough Defenses",
+      "Academic Project Defense: Presenting Methodologies, Answering Tough Defenses",
       "Intercultural Fluency: Navigating Global Diversity, High vs Low Context Norms",
       "Public Speaking Under Duress: Handling Hecklers, Tech Failures and Disruption",
       "Personal Branding: Elevator Pitches, Networking and Thought Leadership Voice",

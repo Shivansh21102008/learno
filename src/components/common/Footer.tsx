@@ -16,7 +16,7 @@ export const Footer: React.FC = () => {
             <LearnoLogo size="md" />
             <p className="font-sans text-xs text-neutral-400 leading-relaxed max-w-md">
               High-performance cloud academic platform engineered for Classes 5 to 9.
-              Streamlining chapter test rigs, AI Viva verbal cognition, and competitive syllabus practice with zero friction.
+              Streamlining chapter test rigs, AI PDF exam synthesis, and competitive syllabus practice with zero friction.
             </p>
             <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[#00FF66]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00FF66] shadow-[0_0_8px_#00FF66] animate-pulse" />
@@ -58,7 +58,7 @@ export const Footer: React.FC = () => {
               </li>
               <li className="flex items-center gap-2 text-neutral-300">
                 <span className="w-1 h-1 rounded-full bg-[#00FF66]" />
-                <span>AI Oral Viva Hub</span>
+                <span>AI PDF Exam Generator</span>
               </li>
               <li className="flex items-center gap-2 text-neutral-300">
                 <span className="w-1 h-1 rounded-full bg-[#00FF66]" />

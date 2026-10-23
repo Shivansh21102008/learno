@@ -11,7 +11,6 @@ import {
   Layers,
   BookOpen,
   Sparkles,
-  Mic,
   FileText,
 } from 'lucide-react';
 
@@ -59,16 +58,16 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
 
           {/* Glitch9 Massive Headline */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tighter uppercase font-display leading-[1.05]">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tighter uppercase font-display leading-[1.05]">
             Master Any Subject.{' '}
-            <span className="text-[#00FF66] drop-shadow-[0_0_35px_rgba(0,255,102,0.65)]">
+            <span className="text-[#00FF66] drop-shadow-[0_0_15px_rgba(0,255,102,0.35)]">
               Zero Limits.
             </span>
           </h1>
 
           {/* Subtitle */}
-          <p className="text-base sm:text-lg text-neutral-400 max-w-2xl mx-auto font-sans leading-relaxed">
-            High-performance chapter test rigs, AI Viva oral diagnostics, and 24/7 neural doubt solving.
+          <p className="text-sm sm:text-base md:text-lg text-neutral-400 max-w-2xl mx-auto font-sans leading-relaxed">
+            High-performance chapter test rigs, AI PDF exam synthesis, and comprehensive curriculum analytics.
             Experience school curriculum transformed into an instant, lag-free academic mastery engine.
           </p>
 
@@ -167,9 +166,9 @@ export const HomePage: React.FC<HomePageProps> = ({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* Card 1: 200 Problems Rig */}
-          <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_30px_rgba(0,255,102,0.15)] transition-all duration-300 flex flex-col justify-between group">
+          <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_20px_rgba(0,255,102,0.12)] transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
               <div className="w-12 h-12 rounded-xl bg-black border border-white/15 text-white flex items-center justify-center font-bold text-lg group-hover:scale-105 group-hover:border-[#00FF66] transition-all">
                 📋
@@ -193,33 +192,8 @@ export const HomePage: React.FC<HomePageProps> = ({
             </button>
           </div>
 
-          {/* Card 2: AI Viva Hub */}
-          <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_30px_rgba(0,255,102,0.15)] transition-all duration-300 flex flex-col justify-between group">
-            <div className="space-y-3">
-              <div className="w-12 h-12 rounded-xl bg-black border border-white/15 text-white flex items-center justify-center font-bold text-lg group-hover:scale-105 group-hover:border-[#00FF66] transition-all">
-                🎙️
-              </div>
-              <div className="flex items-center justify-between">
-                <h3 className="font-mono text-sm font-bold text-white uppercase tracking-wider">AI Viva Hub</h3>
-                <span className="px-2 py-0.5 rounded font-mono bg-violet-500/10 text-violet-400 border border-violet-500/30 text-[9px] font-bold">
-                  VOICE RIG
-                </span>
-              </div>
-              <p className="text-xs text-neutral-400 font-sans leading-relaxed">
-                Interactive voice examiner with instant diagnostic evaluation and full executive English fluency scoring.
-              </p>
-            </div>
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className="mt-5 w-full py-2.5 px-4 rounded-xl bg-white/[0.04] hover:bg-[#00FF66] text-neutral-200 hover:text-black font-mono font-bold text-xs uppercase tracking-wider transition-all border border-white/15 hover:border-[#00FF66] flex items-center justify-center gap-1.5"
-            >
-              <span>[ START VIVA ]</span>
-              <Mic className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Card 3: Term Exams */}
-          <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_30px_rgba(0,255,102,0.15)] transition-all duration-300 flex flex-col justify-between group">
+          {/* Card 2: Term Exams */}
+          <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_20px_rgba(0,255,102,0.12)] transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
               <div className="w-12 h-12 rounded-xl bg-black border border-white/15 text-white flex items-center justify-center font-bold text-lg group-hover:scale-105 group-hover:border-[#00FF66] transition-all">
                 🏆
@@ -243,8 +217,8 @@ export const HomePage: React.FC<HomePageProps> = ({
             </button>
           </div>
 
-          {/* Card 4: AI PDF Exam Generator */}
-          <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_30px_rgba(0,255,102,0.15)] transition-all duration-300 flex flex-col justify-between group">
+          {/* Card 3: AI PDF Exam Generator */}
+          <div className="p-6 rounded-2xl bg-[#0A0D14]/90 border border-white/10 hover:border-[#00FF66] shadow-xl hover:shadow-[0_0_20px_rgba(0,255,102,0.12)] transition-all duration-300 flex flex-col justify-between group">
             <div className="space-y-3">
               <div className="w-12 h-12 rounded-xl bg-black border border-white/15 text-[#00FF66] flex items-center justify-center font-bold text-lg group-hover:scale-105 group-hover:border-[#00FF66] transition-all">
                 <FileText className="w-6 h-6" />
@@ -283,7 +257,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
 
           {/* Class Switcher Buttons in Glitch9 Style */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black border border-white/15">
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black border border-white/15 overflow-x-auto max-w-full scrollbar-none">
             {VALID_CLASSES.map((cls) => (
               <button
                 key={cls}

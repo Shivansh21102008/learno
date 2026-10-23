@@ -97,10 +97,10 @@ export const CinematicIntroScreen: React.FC<CinematicIntroScreenProps> = ({ onCo
 
         {/* Line 2: Rudra Giri (Glitch9 Display Typography) */}
         <div className="min-h-[3.5rem] sm:min-h-[5.5rem] md:min-h-[6.5rem] flex items-center justify-center">
-          <h1 className="font-display text-3xl sm:text-5xl md:text-8xl lg:text-9xl tracking-tight text-white uppercase drop-shadow-[0_0_35px_rgba(255,255,255,0.25)]">
+          <h1 className="font-display text-3xl sm:text-5xl md:text-8xl lg:text-9xl tracking-tight text-white uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]">
             {line2Text === line2Full ? (
               <>
-                Rudra <span className="text-[#00FF66] drop-shadow-[0_0_30px_rgba(0,255,102,0.8)]">Giri</span>
+                Rudra <span className="text-[#00FF66] drop-shadow-[0_0_12px_rgba(0,255,102,0.35)]">Giri</span>
               </>
             ) : (
               line2Text
